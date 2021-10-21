@@ -23,16 +23,6 @@ inputs:
 runs: 
   using: "composite"
   steps:
-    - name: Reset environmental variables
-      shell: bash
-      run: |
-        echo "$GITHUB_ENV"
-        echo 'PROJECT_ID=null' >> $GITHUB_ENV
-        echo 'ITEM_ID=null' >> $GITHUB_ENV
-        echo 'ITEM_TITLE=null' >> $GITHUB_ENV
-        echo 'FIELD_ID=null' >> $GITHUB_ENV
-        echo 'OPTION_ID=null' >> $GITHUB_ENV
-
     - name: Get project metadata
       env: 
         GITHUB_TOKEN: ${{ inputs.github_token }}
@@ -74,6 +64,7 @@ runs:
           echo 'ITEM_ID='$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' project.json --arg CONTENT_ID "$CONTENT_ID") >> $GITHUB_ENV
           echo 'ITEM_TITLE='$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' project.json --arg CONTENT_ID "$CONTENT_ID") >> $GITHUB_ENV
           echo 'FIELD_ID='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .id' project.json --arg FIELD "$FIELD") >> $GITHUB_ENV
+          echo 'FIELD_IS_SELECT='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | has("options")' project.json --arg FIELD "$FIELD")
           echo 'OPTION_ID='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | .options[] | select(.name | contains($VALUE)) | .id' project.json --arg VALUE "$VALUE" --arg FIELD "$FIELD") >> $GITHUB_ENV
 
     - name: Ensure project, item, field, and option were found
@@ -88,7 +79,7 @@ runs:
         if [ -z "$PROJECT_ID" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi  
         if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi  
         if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi  
-        if [ -z "$OPTION_ID" ]; then echo "Option not found with value '$VALUE'"; exit 1; fi  
+        if [ $FIELD_IS_SELECT = "true" && -z "$OPTION_ID" ]; then echo "Option not found with value '$VALUE'"; exit 1; fi  
 
     - name: Update field
       env:
@@ -97,6 +88,12 @@ runs:
         VALUE: ${{ inputs.value }}
       shell: bash
       run: |
+        if [ $FIELD_IS_SELECT = "true" ]; then 
+          export $VALUE_TO_SET="$OPTION_ID"
+        else
+          export $VALUE_TO_SET="$VALUE"
+        fi
+
         gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
           mutation($project: ID!, $item: ID!, $field: ID!, $option: ID!) {
             updateProjectNextItemField(
@@ -104,14 +101,14 @@ runs:
                 projectId: $project
                 itemId: $item
                 fieldId: $field
-                value: $option
+                value: $value
               }
             ) {
               projectNextItem {
                 id
               }
             }
-          }' -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f option=$OPTION_ID
+          }' -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value=$VALUE_TO_SET
 
         echo ""
         echo "Updated field '$FIELD' on '$ITEM_TITLE' to '$VALUE'. Happy reporting! 📈"
