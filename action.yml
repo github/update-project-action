@@ -26,6 +26,7 @@ runs:
     - name: Reset environmental variables
       shell: bash
       run: |
+        echo "$GITHUB_ENV"
         echo 'PROJECT_ID=""' >> $GITHUB_ENV
         echo 'ITEM_ID=""' >> $GITHUB_ENV
         echo 'ITEM_TITLE=""' >> $GITHUB_ENV
