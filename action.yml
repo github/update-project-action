@@ -24,6 +24,7 @@ runs:
   using: "composite"
   steps:
     - name: Get project metadata
+      id: get_project_metadata
       env: 
         GITHUB_TOKEN: ${{ inputs.github_token }}
         PROJECT_NUMBER: ${{ inputs.project_number }}
@@ -60,12 +61,12 @@ runs:
             }
           }' -F project_number=$PROJECT_NUMBER -f organization=$ORGANIZATION > project.json
 
-          echo 'PROJECT_ID='$(jq -r '.data.organization.projectNext.id' project.json) >> $GITHUB_ENV
-          echo 'ITEM_ID='$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' project.json --arg CONTENT_ID "$CONTENT_ID") >> $GITHUB_ENV
-          echo 'ITEM_TITLE='$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' project.json --arg CONTENT_ID "$CONTENT_ID") >> $GITHUB_ENV
-          echo 'FIELD_ID='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .id' project.json --arg FIELD "$FIELD") >> $GITHUB_ENV
-          echo 'FIELD_IS_SELECT='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | has("options")' project.json --arg FIELD "$FIELD") >> $GITHUB_ENV
-          echo 'OPTION_ID='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | .options[]? | select(.name | contains($VALUE)) | .id' project.json --arg VALUE "$VALUE" --arg FIELD "$FIELD") >> $GITHUB_ENV
+          echo '::set-output project_id='$(jq -r '.data.organization.projectNext.id' project.json)
+          echo '::set-output item_id='$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' project.json --arg CONTENT_ID "$CONTENT_ID")
+          echo '::set-output item_title='$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' project.json --arg CONTENT_ID "$CONTENT_ID")
+          echo '::set-output field_id='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .id' project.json --arg FIELD "$FIELD")
+          echo '::set-output field_is_select='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | has("options")' project.json --arg FIELD "$FIELD")
+          echo '::set-output option_id='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | .options[]? | select(.name | contains($VALUE)) | .id' project.json --arg VALUE "$VALUE" --arg FIELD "$FIELD")
 
     - name: Ensure project, item, field, and option were found
       shell: bash
@@ -75,6 +76,12 @@ runs:
         FIELD: ${{ inputs.field }}       
         CONTENT_ID: ${{ inputs.content_id }}
         VALUE: ${{ inputs.value }}
+        PROJECT_ID: ${{ steps.get_project_metadata.project_id }}
+        ITEM_ID: ${{ steps.get_project_metadata.item_id }}
+        FIELD_ID: ${{ steps.get_project_metadata.field_id }}
+        FIELD_IS_SELECT: ${{ steps.get_project_metadata.field_is_select }}
+        OPTION_ID: ${{ steps.get_project_metadata.option_id }}
+
       run: |
         if [ -z "$PROJECT_ID" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi  
         if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi  
@@ -86,6 +93,13 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         FIELD: ${{ inputs.field }}       
         VALUE: ${{ inputs.value }}
+        PROJECT_ID: ${{ steps.get_project_metadata.project_id }}
+        ITEM_ID: ${{ steps.get_project_metadata.item_id }}
+        FIELD_ID: ${{ steps.get_project_metadata.field_id }}
+        FIELD_IS_SELECT: ${{ steps.get_project_metadata.field_is_select }}
+        OPTION_ID: ${{ steps.get_project_metadata.option_id }}
+        ITEM_TITLE: ${{ steps.get_project_metadata.item_title }}
+
       shell: bash
       run: |
         if [ "$FIELD_IS_SELECT" = "true" ]; then 
