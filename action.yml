@@ -67,11 +67,17 @@ runs:
 
     - name: Ensure project, item, field, and option were found
       shell: bash
+      env: 
+        PROJECT_NUMBER: ${{ inputs.project_number }}
+        ORGANIZATION: ${{ inputs.organization }}
+        FIELD: ${{ inputs.field }}       
+        CONTENT_ID: ${{ inputs.content_id }}
+        VALUE: ${{ inputs.value }}
       run: |
-        if [ -z "$PROJECT_ID" ]; then echo "Project not found"; exit 1; fi  
-        if [ -z "$ITEM_ID" ]; then echo "Item not found"; exit 1; fi  
-        if [ -z "$FIELD_ID" ]; then echo "Field not found"; exit 1; fi  
-        if [ -z "$OPTION_ID" ]; then echo "Option not found"; exit 1; fi  
+        if [ -z "$PROJECT_ID" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi  
+        if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi  
+        if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi  
+        if [ -z "$OPTION_ID" ]; then echo "Option not found with value '$VALUE'"; exit 1; fi  
 
     - name: Update field
       env:
