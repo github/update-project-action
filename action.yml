@@ -18,8 +18,27 @@ inputs:
     description: The value to set the project field to
     required: true
   github_token:
-    description: A GitHub Token with access to both the source issue and the destination project
+    description: A GitHub Token with access to both the source issue and the destination project (`repo` and `write:org` scopes)
     required: true
+outputs:
+  project_id:
+    description: "The global ID of the project"
+    value: ${{ steps.parse_project_metadata.outputs.project_id }}
+  item_id:
+    description: "The global ID of the issue or pull request"
+    value: ${{ steps.parse_project_metadata.outputs.item_id }}
+  item_title:
+    description: "The title of the issue or pull request"
+    value: ${{ steps.parse_project_metadata.outputs.item_title }}
+  field_id:
+    description: "The global ID of the field"
+    value: ${{ steps.parse_project_metadata.outputs.field_id }}
+  field_is_select:
+    description: "Whether or not the field is a select field vs. free-form input"
+    value: ${{ steps.parse_project_metadata.outputs.field_is_select }}
+  option_id:
+    description: "The global ID of the selected option"
+    value: ${{ steps.parse_project_metadata.outputs.option_id }}
 runs: 
   using: "composite"
   steps:

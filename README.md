@@ -23,3 +23,21 @@ jobs:
           field: Status
           value: ${{ github.event.client_payload.data.status }}
 ```
+
+### Inputs
+
+* `github_token` - a personal access token with `repo` and `write:org` scope
+* `organization` - the organization that owns the project. If not is given, the owner of the repo is assumed
+* `project_number` - the numeric ID of the project, as seen in the project's URL
+* `content_id` - the GraphQL global ID of the Issue or PR to update on the project
+* `field` - the human-readable label of the field to update (e.g., `Status`)
+* `value` - the human-readable value to set the field to
+
+### Outputs
+
+* `project_id` - the global ID of the project that was updated
+* `item_id` - the global ID of the pull request or issue on the project board that was updated
+* `item_title` - the title of the pull request or issue on the project board that was updated
+* `field_id` - the field that was updated
+* `field_is_select` - if the updated field was a select one field (vs. free-form input)
+* `option_id` - the ID of the selected option
