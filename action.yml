@@ -62,6 +62,7 @@ runs:
 
     - name: parse project metadata
       id: parse_project_metadata
+      shell: bash
       run: |
           echo '::set-output name=project_id::'$(jq -r '.data.organization.projectNext.id' project.json)
           echo '::set-output name=item_id::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' project.json --arg CONTENT_ID "$CONTENT_ID")
@@ -71,7 +72,6 @@ runs:
           echo '::set-output name=option_id::'$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | .options[]? | select(.name | contains($VALUE)) | .id' project.json --arg VALUE "$VALUE" --arg FIELD "$FIELD")
 
     - name: Ensure project, item, field, and option were found
-      shell: bash
       env: 
         PROJECT_NUMBER: ${{ inputs.project_number }}
         ORGANIZATION: ${{ inputs.organization }}
