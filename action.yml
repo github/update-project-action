@@ -108,7 +108,7 @@ runs:
                 id
               }
             }
-          }' -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value=$VALUE_TO_SET
+          }' -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value="$VALUE_TO_SET"
 
         echo ""
         echo "Updated field '$FIELD' on '$ITEM_TITLE' to '$VALUE'. Happy reporting! 📈"
