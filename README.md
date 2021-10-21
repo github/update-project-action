@@ -10,10 +10,11 @@ on:
   repository_dispatch:
     types: [status_update]
 jobs:
-  update_status:
+  update_project:
     runs-on: ubuntu-latest
     steps:
-      - uses: benbalter/update-project-action@v1
+      - name: Update status
+        uses: benbalter/update-project-action@v1
         with:
           github_token: ${{ secrets.STATUS_UPDATE_TOKEN }}
           organization: github
