@@ -35,7 +35,7 @@ runs:
         gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
           query($organization: String!, $project_number: Int!) {
             organization(login: $organization) {
-              ProjectNext(number: $project_number) {
+              projectNext(number: $project_number) {
                 id
                 items(first: 50) {
                   nodes {
