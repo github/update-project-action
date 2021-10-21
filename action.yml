@@ -23,6 +23,15 @@ inputs:
 runs: 
   using: "composite"
   steps:
+    - name: Reset environmental variables
+      shell: bash
+      run: |
+        echo 'PROJECT_ID=""' >> $GITHUB_ENV
+        echo 'ITEM_ID=""' >> $GITHUB_ENV
+        echo 'ITEM_TITLE=""' >> $GITHUB_ENV
+        echo 'FIELD_ID=""' >> $GITHUB_ENV
+        echo 'OPTION_ID=""' >> $GITHUB_ENV
+
     - name: Get project metadata
       env: 
         GITHUB_TOKEN: ${{ inputs.github_token }}
