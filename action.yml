@@ -68,6 +68,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
       shell: bash
+      if: ${{ success() }}
       run: |
         gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
           mutation($project: ID!, $item: ID!, $field: ID!, $option: ID!) {
