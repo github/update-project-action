@@ -89,9 +89,9 @@ runs:
       shell: bash
       run: |
         if [ "$FIELD_IS_SELECT" = "true" ]; then 
-          export $VALUE_TO_SET="$OPTION_ID"
+          export VALUE_TO_SET="$OPTION_ID"
         else
-          export $VALUE_TO_SET="$VALUE"
+          export VALUE_TO_SET="$VALUE"
         fi
 
         gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
