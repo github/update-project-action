@@ -95,7 +95,7 @@ runs:
         fi
 
         gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
-          mutation($project: ID!, $item: ID!, $field: ID!, $option: ID!) {
+          mutation($project: ID!, $item: ID!, $field: ID!, $value: ID!) {
             updateProjectNextItemField(
               input: {
                 projectId: $project
