@@ -28,7 +28,7 @@ runs:
         PROJECT_NUMBER: ${{ inputs.project_number }}
         ORGANIZATION: ${{ inputs.organization }}
         FIELD: ${{ inputs.field }}       
-        ITEM_ID: ${{ inputs.item_id }}
+        CONTENT_ID: ${{ inputs.content_id }}
         VALUE: ${{ inputs.value }}
       shell: bash
       run: |
