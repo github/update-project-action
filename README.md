@@ -24,6 +24,7 @@ jobs:
           value: ${{ github.event.client_payload.data.status }}
 ```
 
+*Note: The above step can be repeated multiple times in a given job to update multiple fields on the same or different projects.* 
 ### Inputs
 
 * `github_token` - a personal access token with `repo` and `write:org` scope
