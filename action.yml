@@ -61,7 +61,7 @@ runs:
 
           echo 'PROJECT_ID='$(jq -r '.data.organization.projectNext.id' project.json) >> $GITHUB_ENV
           echo 'ITEM_ID='$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' project.json --arg CONTENT_ID "$CONTENT_ID") >> $GITHUB_ENV
-          echo 'ITEM_TITLE='$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .title' project.json --arg CONTENT_ID "$CONTENT_ID") >> $GITHUB_ENV
+          echo 'ITEM_TITLE='$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' project.json --arg CONTENT_ID "$CONTENT_ID") >> $GITHUB_ENV
           echo 'FIELD_ID='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .id' project.json --arg FIELD "$FIELD") >> $GITHUB_ENV
           echo 'OPTION_ID='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | .options[] | select(.name | contains($VALUE)) | .id' project.json --arg VALUE "$VALUE" --arg FIELD "$FIELD") >> $GITHUB_ENV
 
