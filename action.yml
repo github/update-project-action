@@ -2,8 +2,9 @@ name: Update project
 description: Updates an item on a GitHub Projects (beta) board based on a workflow dispatch event's input
 inputs:
   organization: 
-    description: The organization that contains the project
-    required: true
+    description: The organization that contains the project, defaults to the current repository owner
+    required: false
+    default: ${{ github.repository_owner }}
   project_number:
     description: The project number from the project's URL
     required: true
