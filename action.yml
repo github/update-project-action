@@ -97,5 +97,5 @@ runs:
           }' -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f option=$OPTION_ID
 
         echo ""
-        echo "Updated field '$FIELD' on '$ISSUE_TITLE' to '$VALUE'. Happy reporting! 📈"
+        echo "Updated field '$FIELD' on '$ITEM_TITLE' to '$VALUE'. Happy reporting! 📈"
 
