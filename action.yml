@@ -65,7 +65,7 @@ runs:
           echo 'ITEM_TITLE='$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' project.json --arg CONTENT_ID "$CONTENT_ID") >> $GITHUB_ENV
           echo 'FIELD_ID='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .id' project.json --arg FIELD "$FIELD") >> $GITHUB_ENV
           echo 'FIELD_IS_SELECT='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | has("options")' project.json --arg FIELD "$FIELD") >> $GITHUB_ENV
-          echo 'OPTION_ID='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | .options[] | select(.name | contains($VALUE)) | .id' project.json --arg VALUE "$VALUE" --arg FIELD "$FIELD") >> $GITHUB_ENV
+          echo 'OPTION_ID='$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | .options[]? | select(.name | contains($VALUE)) | .id' project.json --arg VALUE "$VALUE" --arg FIELD "$FIELD") >> $GITHUB_ENV
 
     - name: Ensure project, item, field, and option were found
       shell: bash
