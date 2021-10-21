@@ -88,7 +88,7 @@ runs:
         VALUE: ${{ inputs.value }}
       shell: bash
       run: |
-        if [ $FIELD_IS_SELECT = "true" ]; then 
+        if [ "$FIELD_IS_SELECT" = "true" ]; then 
           export $VALUE_TO_SET="$OPTION_ID"
         else
           export $VALUE_TO_SET="$VALUE"
