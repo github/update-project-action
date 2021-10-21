@@ -63,6 +63,10 @@ runs:
     - name: parse project metadata
       id: parse_project_metadata
       shell: bash
+      env:
+        CONTENT_ID: ${{ inputs.content_id }}
+        FIELD: ${{ inputs.field }}       
+        VALUE: ${{ inputs.value }}
       run: |
           echo '::set-output name=project_id::'$(jq -r '.data.organization.projectNext.id' project.json)
           echo '::set-output name=item_id::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' project.json --arg CONTENT_ID "$CONTENT_ID")
