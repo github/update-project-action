@@ -23,8 +23,7 @@ inputs:
 runs: 
   using: "composite"
   steps:
-    - name: Get project metadata
-      id: get_project_metadata
+    - name: Fetch project metadata
       env: 
         GITHUB_TOKEN: ${{ inputs.github_token }}
         PROJECT_NUMBER: ${{ inputs.project_number }}
@@ -61,6 +60,9 @@ runs:
             }
           }' -F project_number=$PROJECT_NUMBER -f organization=$ORGANIZATION > project.json
 
+    - name: parse project metadata
+      id: parse_project_metadata
+      run: |
           echo '::set-output name=project_id::'$(jq -r '.data.organization.projectNext.id' project.json)
           echo '::set-output name=item_id::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' project.json --arg CONTENT_ID "$CONTENT_ID")
           echo '::set-output name=item_title::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' project.json --arg CONTENT_ID "$CONTENT_ID")
@@ -76,11 +78,11 @@ runs:
         FIELD: ${{ inputs.field }}       
         CONTENT_ID: ${{ inputs.content_id }}
         VALUE: ${{ inputs.value }}
-        PROJECT_ID: ${{ steps.get_project_metadata.outputs.project_id }}
-        ITEM_ID: ${{ steps.get_project_metadata.outputs.item_id }}
-        FIELD_ID: ${{ steps.get_project_metadata.outputs.field_id }}
-        FIELD_IS_SELECT: ${{ steps.get_project_metadata.outputs.field_is_select }}
-        OPTION_ID: ${{ steps.get_project_metadata.outputs.option_id }}
+        PROJECT_ID: ${{ steps.parse_project_metadata.outputs.project_id }}
+        ITEM_ID: ${{ steps.parse_project_metadata.outputs.item_id }}
+        FIELD_ID: ${{ steps.parse_project_metadata.outputs.field_id }}
+        FIELD_IS_SELECT: ${{ steps.parse_project_metadata.outputs.field_is_select }}
+        OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
 
       run: |
         if [ -z "$PROJECT_ID" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi  
@@ -93,12 +95,12 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         FIELD: ${{ inputs.field }}       
         VALUE: ${{ inputs.value }}
-        PROJECT_ID: ${{ steps.get_project_metadata.outputs.project_id }}
-        ITEM_ID: ${{ steps.get_project_metadata.outputs.item_id }}
-        FIELD_ID: ${{ steps.get_project_metadata.outputs.field_id }}
-        FIELD_IS_SELECT: ${{ steps.get_project_metadata.outputs.field_is_select }}
-        OPTION_ID: ${{ steps.get_project_metadata.outputs.option_id }}
-        ITEM_TITLE: ${{ steps.get_project_metadata.outputs.item_title }}
+        PROJECT_ID: ${{ steps.parse_project_metadata.outputs.project_id }}
+        ITEM_ID: ${{ steps.parse_project_metadata.outputs.item_id }}
+        FIELD_ID: ${{ steps.parse_project_metadata.outputs.field_id }}
+        FIELD_IS_SELECT: ${{ steps.parse_project_metadata.outputs.field_is_select }}
+        OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
+        ITEM_TITLE: ${{ steps.parse_project_metadata.outputs.item_title }}
 
       shell: bash
       run: |
