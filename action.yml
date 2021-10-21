@@ -83,7 +83,7 @@ runs:
         FIELD_ID: ${{ steps.parse_project_metadata.outputs.field_id }}
         FIELD_IS_SELECT: ${{ steps.parse_project_metadata.outputs.field_is_select }}
         OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
-
+      shell: bash
       run: |
         if [ -z "$PROJECT_ID" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi  
         if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi  
