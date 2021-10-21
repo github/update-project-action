@@ -41,6 +41,11 @@ runs:
         FIELD: ${{ inputs.field }}       
         CONTENT_ID: ${{ inputs.content_id }}
         VALUE: ${{ inputs.value }}
+        PROJECT_ID: ""
+        ITEM_ID: ""
+        ITEM_TITLE: ""
+        FIELD_ID: ""
+        OPTION_ID: ""
       shell: bash
       run: |
         gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
