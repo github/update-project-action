@@ -81,6 +81,8 @@ runs:
                 }
               }
             }' -F project_number=$PROJECT_NUMBER -f organization=$ORGANIZATION > "$FILE_NAME"
+        else
+          echo "Using cached project metadata from '$FILE_NAME'"
         fi 
 
         echo "::set-output name=file_name::$FILE_NAME"
