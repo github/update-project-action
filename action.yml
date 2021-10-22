@@ -43,6 +43,7 @@ runs:
   using: "composite"
   steps:
     - name: Fetch project metadata
+      id: fetch_project_metadata
       env: 
         GITHUB_TOKEN: ${{ inputs.github_token }}
         PROJECT_NUMBER: ${{ inputs.project_number }}
@@ -50,35 +51,40 @@ runs:
         FIELD: ${{ inputs.field }}       
         CONTENT_ID: ${{ inputs.content_id }}
         VALUE: ${{ inputs.value }}
+        FILE_NAME: project-${{ inputs.organization }}-${{ inputs.project_number }}.json
       shell: bash
       run: |
-        gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
-          query($organization: String!, $project_number: Int!) {
-            organization(login: $organization) {
-              projectNext(number: $project_number) {
-                id
-                items(first: 50) {
-                  nodes {
-                    id
-                    content {
-                      ... on Issue {
-                        id
-                        title
+        if [ ! -f "$FILE_NAME" ]; then
+          gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
+            query($organization: String!, $project_number: Int!) {
+              organization(login: $organization) {
+                projectNext(number: $project_number) {
+                  id
+                  items(first: 50) {
+                    nodes {
+                      id
+                      content {
+                        ... on Issue {
+                          id
+                          title
+                        }
                       }
                     }
                   }
-                }
-                fields(first: 10) {
-                  nodes {
-                    id
-                    name
-                    settings
+                  fields(first: 10) {
+                    nodes {
+                      id
+                      name
+                      settings
+                    }
                   }
                 }
               }
-            }
-          }' -F project_number=$PROJECT_NUMBER -f organization=$ORGANIZATION > project.json
+            }' -F project_number=$PROJECT_NUMBER -f organization=$ORGANIZATION > "$FILE_NAME"
+        fi 
 
+        echo "::set-output name=file_name::$FILE_NAME"
+    
     - name: parse project metadata
       id: parse_project_metadata
       shell: bash
@@ -86,13 +92,14 @@ runs:
         CONTENT_ID: ${{ inputs.content_id }}
         FIELD: ${{ inputs.field }}       
         VALUE: ${{ inputs.value }}
+        FILE_NAME: ${{ steps.fetch_project_metadata.outputs.file_name }}
       run: |
-          echo '::set-output name=project_id::'$(jq -r '.data.organization.projectNext.id' project.json)
-          echo '::set-output name=item_id::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' project.json --arg CONTENT_ID "$CONTENT_ID")
-          echo '::set-output name=item_title::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' project.json --arg CONTENT_ID "$CONTENT_ID")
-          echo '::set-output name=field_id::'$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .id' project.json --arg FIELD "$FIELD")
-          echo '::set-output name=field_is_select::'$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | has("options")' project.json --arg FIELD "$FIELD")
-          echo '::set-output name=option_id::'$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | .options[]? | select(.name | contains($VALUE)) | .id' project.json --arg VALUE "$VALUE" --arg FIELD "$FIELD")
+          echo '::set-output name=project_id::'$(jq -r '.data.organization.projectNext.id' "$FILE_NAME")
+          echo '::set-output name=item_id::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
+          echo '::set-output name=item_title::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
+          echo '::set-output name=field_id::'$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .id' "$FILE_NAME" --arg FIELD "$FIELD")
+          echo '::set-output name=field_is_select::'$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | has("options")' "$FILE_NAME" --arg FIELD "$FIELD")
+          echo '::set-output name=option_id::'$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | .options[]? | select(.name | contains($VALUE)) | .id' "$FILE_NAME" --arg VALUE "$VALUE" --arg FIELD "$FIELD")
 
     - name: Ensure project, item, field, and option were found
       env: 
