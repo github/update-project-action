@@ -54,6 +54,7 @@ runs:
         FILE_NAME: project-${{ inputs.organization }}-${{ inputs.project_number }}.json
       shell: bash
       run: |
+        # Fetch project metadata
         if [ ! -f "$FILE_NAME" ]; then
           gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
             query($organization: String!, $project_number: Int!) {
@@ -87,7 +88,7 @@ runs:
 
         echo "::set-output name=file_name::$FILE_NAME"
     
-    - name: parse project metadata
+    - name: Parse project metadata
       id: parse_project_metadata
       shell: bash
       env:
@@ -96,6 +97,7 @@ runs:
         VALUE: ${{ inputs.value }}
         FILE_NAME: ${{ steps.fetch_project_metadata.outputs.file_name }}
       run: |
+          # Parse project metadata
           echo '::set-output name=project_id::'$(jq -r '.data.organization.projectNext.id' "$FILE_NAME")
           echo '::set-output name=item_id::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
           echo '::set-output name=item_title::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
@@ -117,6 +119,7 @@ runs:
         OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
       shell: bash
       run: |
+        # Ensure project, item, field, and option were found
         if [ -z "$PROJECT_ID" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi  
         if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi  
         if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi  
@@ -136,6 +139,7 @@ runs:
 
       shell: bash
       run: |
+        # Update field
         if [ "$FIELD_IS_SELECT" = "true" ]; then 
           export VALUE_TO_SET="$OPTION_ID"
         else
