@@ -60,7 +60,7 @@ runs:
               organization(login: $organization) {
                 projectNext(number: $project_number) {
                   id
-                  items(first: 50) {
+                  items(first: 100) {
                     nodes {
                       id
                       content {
@@ -71,7 +71,7 @@ runs:
                       }
                     }
                   }
-                  fields(first: 10) {
+                  fields(first: 25) {
                     nodes {
                       id
                       name
