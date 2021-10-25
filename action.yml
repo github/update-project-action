@@ -1,7 +1,7 @@
 name: Update project
 description: Updates an item on a GitHub Projects (beta) board based on a workflow dispatch event's input
 inputs:
-  organization: 
+  organization:
     description: The organization that contains the project, defaults to the current repository owner
     required: false
     default: ${{ github.repository_owner }}
@@ -11,7 +11,7 @@ inputs:
   content_id:
     description: The global ID of the issue or pull request within the project
     required: true
-  field: 
+  field:
     description: The field on the project to set the value of
     required: true
   value:
@@ -39,16 +39,16 @@ outputs:
   option_id:
     description: "The global ID of the selected option"
     value: ${{ steps.parse_project_metadata.outputs.option_id }}
-runs: 
+runs:
   using: "composite"
   steps:
     - name: Fetch project metadata
       id: fetch_project_metadata
-      env: 
+      env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         PROJECT_NUMBER: ${{ inputs.project_number }}
         ORGANIZATION: ${{ inputs.organization }}
-        FIELD: ${{ inputs.field }}       
+        FIELD: ${{ inputs.field }}
         CONTENT_ID: ${{ inputs.content_id }}
         VALUE: ${{ inputs.value }}
         FILE_NAME: project-${{ inputs.organization }}-${{ inputs.project_number }}.json
@@ -84,16 +84,16 @@ runs:
             }' -F project_number=$PROJECT_NUMBER -f organization=$ORGANIZATION > "$FILE_NAME"
         else
           echo "Using cached project metadata from '$FILE_NAME'"
-        fi 
+        fi
 
         echo "::set-output name=file_name::$FILE_NAME"
-    
+
     - name: Parse project metadata
       id: parse_project_metadata
       shell: bash
       env:
         CONTENT_ID: ${{ inputs.content_id }}
-        FIELD: ${{ inputs.field }}       
+        FIELD: ${{ inputs.field }}
         VALUE: ${{ inputs.value }}
         FILE_NAME: ${{ steps.fetch_project_metadata.outputs.file_name }}
       run: |
@@ -106,10 +106,10 @@ runs:
           echo '::set-output name=option_id::'$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | .options[]? | select(.name | contains($VALUE)) | .id' "$FILE_NAME" --arg VALUE "$VALUE" --arg FIELD "$FIELD")
 
     - name: Ensure project, item, field, and option were found
-      env: 
+      env:
         PROJECT_NUMBER: ${{ inputs.project_number }}
         ORGANIZATION: ${{ inputs.organization }}
-        FIELD: ${{ inputs.field }}       
+        FIELD: ${{ inputs.field }}
         CONTENT_ID: ${{ inputs.content_id }}
         VALUE: ${{ inputs.value }}
         PROJECT_ID: ${{ steps.parse_project_metadata.outputs.project_id }}
@@ -120,15 +120,15 @@ runs:
       shell: bash
       run: |
         # Ensure project, item, field, and option were found
-        if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi  
-        if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi  
-        if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi  
-        if [[ "$FIELD_IS_SELECT" = "true" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi  
+        if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi
+        if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi
+        if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi
+        if [[ "$FIELD_IS_SELECT" = "true" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi
 
     - name: Update field
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
-        FIELD: ${{ inputs.field }}       
+        FIELD: ${{ inputs.field }}
         VALUE: ${{ inputs.value }}
         PROJECT_ID: ${{ steps.parse_project_metadata.outputs.project_id }}
         ITEM_ID: ${{ steps.parse_project_metadata.outputs.item_id }}
@@ -140,7 +140,7 @@ runs:
       shell: bash
       run: |
         # Update field
-        if [ "$FIELD_IS_SELECT" = "true" ]; then 
+        if [ "$FIELD_IS_SELECT" = "true" ]; then
           export VALUE_TO_SET="$OPTION_ID"
         else
           export VALUE_TO_SET="$VALUE"
@@ -164,4 +164,3 @@ runs:
 
         echo ""
         echo "Updated field '$FIELD' on '$ITEM_TITLE' to '$VALUE'. Happy reporting! 📈"
-
