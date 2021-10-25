@@ -1,0 +1,42 @@
+name: CI
+on: [push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: lint
+        run: script/lint
+  
+  integration_test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Update status
+        uses: benbalter/update-project-action@${{ env.GITHUB_SHA }}
+        with:
+          github_token: ${{ secrets.INTEGRATION_TEST_TOKEN }}
+          organization: balter-test-org
+          project_number: 2
+          content_id: I_kwDOGRmzRc49tos9
+          field: Status
+          value: 🟢 Green
+      
+      - name: Set date
+        id: set-date
+        run: |
+          echo '::set-output name=date::'$(date +"%m/%d/%Y")
+
+      - name: Update status as of
+        uses: benbalter/update-project-action@${{ env.GITHUB_SHA }}
+        with:
+          github_token: ${{ secrets.INTEGRATION_TEST_TOKEN }}
+          organization: balter-test-org
+          project_number: 2
+          content_id: I_kwDOGRmzRc49tos9
+          field: Status as of
+          value: ${{ steps.set-date.outputs.date }}
