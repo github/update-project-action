@@ -1,6 +1,6 @@
 # Update Project Action
 
-Updates an item on a GitHub Projects (beta) board based on a workflow dispatch event's input.
+Updates an item on a GitHub Projects (beta) board based on a workflow dispatch (or other) event's input.
 
 ## Usage
 
