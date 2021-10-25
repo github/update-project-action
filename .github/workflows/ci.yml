@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Update status
-        uses: ./action.yml
+        uses: ./
         with:
           github_token: ${{ secrets.INTEGRATION_TEST_TOKEN }}
           organization: balter-test-org
@@ -35,7 +35,7 @@ jobs:
           echo '::set-output name=date::'$(date +"%m/%d/%Y")
 
       - name: Update status as of
-        uses: ./action.yml
+        uses: ./
         with:
           github_token: ${{ secrets.INTEGRATION_TEST_TOKEN }}
           organization: balter-test-org
