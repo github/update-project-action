@@ -120,7 +120,7 @@ runs:
       shell: bash
       run: |
         # Ensure project, item, field, and option were found
-        if [ -z "$PROJECT_ID" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi  
+        if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi  
         if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi  
         if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi  
         if [[ "$FIELD_IS_SELECT" = "true" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi  
