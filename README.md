@@ -2,6 +2,8 @@
 
 Updates an item on a GitHub Projects (beta) board based on a workflow dispatch (or other) event's input.
 
+[![CI](https://github.com/benbalter/update-project-action/actions/workflows/ci.yml/badge.svg)](https://github.com/benbalter/update-project-action/actions/workflows/ci.yml)
+
 ## Usage
 
 ```yml
