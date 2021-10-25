@@ -16,8 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
       - name: Update status
-        uses: benbalter/update-project-action@${{ env.GITHUB_SHA }}
+        uses: ./action.yml
         with:
           github_token: ${{ secrets.INTEGRATION_TEST_TOKEN }}
           organization: balter-test-org
@@ -32,7 +35,7 @@ jobs:
           echo '::set-output name=date::'$(date +"%m/%d/%Y")
 
       - name: Update status as of
-        uses: benbalter/update-project-action@${{ env.GITHUB_SHA }}
+        uses: ./action.yml
         with:
           github_token: ${{ secrets.INTEGRATION_TEST_TOKEN }}
           organization: balter-test-org
