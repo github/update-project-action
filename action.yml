@@ -1,5 +1,5 @@
 name: Update project
-description: Updates an item on a GitHub Projects (beta) board based on a workflow dispatch event's input
+description: Updates an item on a GitHub Projects (beta) board based on a workflow dispatch (or other) event's input.
 inputs:
   organization:
     description: The organization that contains the project, defaults to the current repository owner
