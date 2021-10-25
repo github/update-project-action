@@ -32,7 +32,7 @@ jobs:
       - name: Set date
         id: set-date
         run: |
-          echo '::set-output name=date::'$(date +"%m/%d/%Y")
+          echo '::set-output name=date::'$(date +"%Y-%m-%d")
 
       - name: Update status as of
         uses: ./
