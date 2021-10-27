@@ -1,10 +1,22 @@
 # Update Project Action
 
-Updates an item's fields on a GitHub Projects (beta) board based on a workflow dispatch (or other) event's input.
+A composite GitHub action that updates an item's fields on a GitHub Projects (beta) board based on a workflow dispatch (or other) event's input.
 
 [![CI](https://github.com/benbalter/update-project-action/actions/workflows/ci.yml/badge.svg)](https://github.com/benbalter/update-project-action/actions/workflows/ci.yml)
 
+## Goals 
+
+* To make it easier to update the fields of a GitHub Project board based on action taken elsewhere within the development process (e.g., status update comments)
+* Keep it simple - Prefer boring technology that others can understand, modify, and contribute to
+* Never force a human to do what a robot can
+
+## Status
+
+Used to automate non-production workflows.
+
 ## Usage
+
+To use this composite GitHub Action, add the following to a YAML file in your repository's `.github/workflows/` directory:
 
 ```yml
 name: Update status on project board
@@ -27,6 +39,10 @@ jobs:
 ```
 
 *Note: The above step can be repeated multiple times in a given job to update multiple fields on the same or different projects.* 
+
+### Roadmap
+
+The Action is largely feature complete with regards to its initial goals. Find a bug or have a feature request? [Open an issue]([htt](https://github.com/benbalter/update-project-action/issues), or better yet, submit a pull request - contribution welcome!
 ### Inputs
 
 * `content_id` - The global ID of the issue or pull request within the project
