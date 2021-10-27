@@ -16,7 +16,7 @@ Used to automate non-production workflows.
 
 ## Usage
 
-To use this composite GitHub Action, add the following to a YAML file in your repository's `.github/workflows/` directory:
+To use this composite GitHub Action, add the following to a YAML file in your repository's `.github/workflows/` directory, customizing the `with` section following [the instructions in the Inputs section](#inputs) below:
 
 ```yml
 name: Update status on project board
