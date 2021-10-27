@@ -1,6 +1,6 @@
 # Update Project Action
 
-Updates an item on a GitHub Projects (beta) board based on a workflow dispatch (or other) event's input.
+Updates an item's fields on a GitHub Projects (beta) board based on a workflow dispatch (or other) event's input.
 
 [![CI](https://github.com/benbalter/update-project-action/actions/workflows/ci.yml/badge.svg)](https://github.com/benbalter/update-project-action/actions/workflows/ci.yml)
 
@@ -29,18 +29,18 @@ jobs:
 *Note: The above step can be repeated multiple times in a given job to update multiple fields on the same or different projects.* 
 ### Inputs
 
-* `github_token` - a personal access token with `repo` and `write:org` scope
-* `organization` - the organization that owns the project. If not is given, the owner of the repo is assumed
-* `project_number` - the numeric ID of the project, as seen in the project's URL
-* `content_id` - the GraphQL global ID of the Issue or PR to update on the project
-* `field` - the human-readable label of the field to update (e.g., `Status`)
-* `value` - the human-readable value to set the field to
+* `content_id` - The global ID of the issue or pull request within the project
+* `field` - The field on the project to set the value of
+* `github_token` - A GitHub Token with access to both the source issue and the destination project (`repo` and `write:org` scopes)
+* `organization` - The organization that contains the project, defaults to the current repository owner
+* `project_number` - The project number from the project's URL
+* `value` - The value to set the project field to
 
 ### Outputs
 
-* `project_id` - the global ID of the project that was updated
-* `item_id` - the global ID of the pull request or issue on the project board that was updated
-* `item_title` - the title of the pull request or issue on the project board that was updated
-* `field_id` - the field that was updated
-* `field_is_select` - if the updated field was a select one field (vs. free-form input)
-* `option_id` - the ID of the selected option
+* `field_id` - The global ID of the field
+* `field_is_select` - Whether or not the field is a select field vs. free-form input
+* `item_id` - The global ID of the issue or pull request
+* `item_title` - The title of the issue or pull request
+* `option_id` - The global ID of the selected option
+* `project_id` - The global ID of the project

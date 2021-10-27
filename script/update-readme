@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+# Updates the Input and Output sections of the README based on the definition in the `actions.yml` file
+
+require 'yaml'
+
+yaml_path = File.expand_path '../action.yml', __dir__
+yaml = YAML.load_file(yaml_path)
+
+readme_path = File.expand_path '../README.md', __dir__
+readme = File.read(readme_path)
+
+%w[Inputs Outputs].each do |section|
+  output = yaml[section.downcase].sort_by { |k,_v| k }.map do |k, v|
+    "* `#{k}` - #{v["description"]}\n"
+  end
+
+  regex = /### #{section}\n(.*?)(?:\n\n|\n?\z)/m
+  old_bullets = readme.match(regex).to_a[1]
+  readme = readme.sub(regex, "### #{section}\n\n#{output.join}")
+end
+
+File.write(readme_path, readme)
