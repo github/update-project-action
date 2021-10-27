@@ -42,7 +42,7 @@ jobs:
 
 ### Roadmap
 
-The Action is largely feature complete with regards to its initial goals. Find a bug or have a feature request? [Open an issue]([htt](https://github.com/benbalter/update-project-action/issues), or better yet, submit a pull request - contribution welcome!
+The Action is largely feature complete with regards to its initial goals. Find a bug or have a feature request? [Open an issue](https://github.com/benbalter/update-project-action/issues), or better yet, submit a pull request - contribution welcome!
 ### Inputs
 
 * `content_id` - The global ID of the issue or pull request within the project
