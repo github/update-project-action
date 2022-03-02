@@ -136,17 +136,7 @@ runs:
         FIELD_IS_SELECT: ${{ steps.parse_project_metadata.outputs.field_is_select }}
         OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
         ITEM_TITLE: ${{ steps.parse_project_metadata.outputs.item_title }}
-
-      shell: bash
-      run: |
-        # Update field
-        if [ "$FIELD_IS_SELECT" = "true" ]; then
-          export VALUE_TO_SET="$OPTION_ID"
-        else
-          export VALUE_TO_SET="$VALUE"
-        fi
-
-        gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
+        QUERY: |
           mutation($project: ID!, $item: ID!, $field: ID!, $value: ID!) {
             updateProjectNextItemField(
               input: {
@@ -160,7 +150,19 @@ runs:
                 id
               }
             }
-          }' -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value="$VALUE_TO_SET"
+          }
+
+      shell: bash
+      run: |
+        # Update field
+        if [ "$FIELD_IS_SELECT" = "true" ]; then
+          export VALUE_TO_SET="$OPTION_ID"
+        else
+          export VALUE_TO_SET="$VALUE"
+          QUERY=$(sed "s/value: ID/value: String/" <<< $QUERY)
+        fi
+
+        gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query="$QUERY" -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value="$VALUE_TO_SET"
 
         echo ""
         echo "Updated field '$FIELD' on '$ITEM_TITLE' to '$VALUE'. Happy reporting! 📈"
