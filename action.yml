@@ -137,7 +137,7 @@ runs:
         OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
         ITEM_TITLE: ${{ steps.parse_project_metadata.outputs.item_title }}
         QUERY: |
-          mutation($project: ID!, $item: ID!, $field: ID!, $value: ID!) {
+          mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
             updateProjectNextItemField(
               input: {
                 projectId: $project
@@ -159,7 +159,6 @@ runs:
           export VALUE_TO_SET="$OPTION_ID"
         else
           export VALUE_TO_SET="$VALUE"
-          QUERY=$(sed "s/value: ID/value: String/" <<< $QUERY)
         fi
 
         gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query="$QUERY" -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value="$VALUE_TO_SET"
