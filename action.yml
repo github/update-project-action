@@ -137,21 +137,21 @@ runs:
         if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi
         if [[ "$FIELD_IS_SELECT" = "true" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi
     
-    - name: Parse field type
+    - name: Parse value
       shell: bash
-      id: parse_field_type
+      id: parse_value
       env:
         FIELD_IS_SELECT: ${{ steps.parse_project_metadata.outputs.field_is_select }}
         OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
         VALUE: ${{ inputs.value }}
       run: |
-        # Parse field type
+        # Parse value
         if [ "$FIELD_IS_SELECT" = "true" ]; then
           echo "::set-output name=value_to_set::$OPTION_ID"
-          echo '::set-output name=field_type::singleSelectOptionId'
+          echo '::set-output name=value_type::singleSelectOptionId'
         else
           echo "::set-output name=value_to_set::$VALUE"
-          echo '::set-output name=field_type::'${{ inputs.value_type }}
+          echo '::set-output name=value_type::'${{ inputs.value_type }}
         fi
 
     - name: Update field
@@ -162,7 +162,7 @@ runs:
         ITEM_ID: ${{ steps.parse_project_metadata.outputs.item_id }}
         FIELD_ID: ${{ steps.parse_project_metadata.outputs.field_id }}
         ITEM_TITLE: ${{ steps.parse_project_metadata.outputs.item_title }}
-        VALUE_TO_SET: ${{ steps.parse_field_type.outputs.value_to_set }}
+        VALUE_TO_SET: ${{ steps.parse_value.outputs.value_to_set }}
         VALUE: ${{ inputs.value }}
         QUERY: |
           mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
@@ -172,7 +172,7 @@ runs:
                 itemId: $item
                 fieldId: $field
                 value: {
-                  ${{ steps.parse_field_type.outputs.field_type }}: $value
+                  ${{ steps.parse_value.outputs.value_type }}: $value
                 }
               }
             ) {
