@@ -146,18 +146,18 @@ runs:
         if [ "$FIELD_TYPE" = "single_select" ]; then
           echo "::set-output name=value_to_set::$OPTION_ID"
           echo '::set-output name=value_type::singleSelectOptionId'
-          echo '::set-output name=value_graphql_type::String'
         else
           echo "::set-output name=value_to_set::$VALUE"
           echo "::set-output name=value_type::$FIELD_TYPE"
+        fi
 
-          if [ "$FIELD_TYPE" = "date" ]; then
-            echo '::set-output name=value_graphql_type::Date'
-          elif [ "$FIELD_TYPE" = "number" ]; then
-            echo '::set-output name=value_graphql_type::Float'
-          else
-            echo '::set-output name=value_graphql_type::String'
-          fi
+        # Set GraphQL Field Type
+        if [ "$FIELD_TYPE" = "date" ]; then
+          echo '::set-output name=value_graphql_type::Date'
+        elif [ "$FIELD_TYPE" = "number" ]; then
+          echo '::set-output name=value_graphql_type::Float'
+        else
+          echo '::set-output name=value_graphql_type::String'
         fi
 
     - name: Update field
