@@ -164,9 +164,9 @@ runs:
       run: |
         # Update field
         if [ "$FIELD_IS_SELECT" = "true" ]; then
-          export VALUE_TO_SET="$OPTION_ID"
+          export VALUE_TO_SET="$(jq -r '{"singleSelectOptionId": $OPTION_ID}' -n '{}' --arg OPTION_ID "$OPTION_ID")"
         else
-          export VALUE_TO_SET="$VALUE"
+          export VALUE_TO_SET="$(jq -r '{"text": $VALUE}' -n '{}' --arg VALUE "$VALUE")"
         fi
 
         gh api graphql -f query="$QUERY" -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value="$VALUE_TO_SET"
