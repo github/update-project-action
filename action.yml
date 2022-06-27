@@ -149,9 +149,18 @@ runs:
         if [ "$FIELD_IS_SELECT" = "true" ]; then
           echo "::set-output name=value_to_set::$OPTION_ID"
           echo '::set-output name=value_type::singleSelectOptionId'
+          echo '::set-output name=value_graphql_type::String'
         else
           echo "::set-output name=value_to_set::$VALUE"
           echo '::set-output name=value_type::'${{ inputs.value_type }}
+
+          if [ "${{ inputs.value_type }}" = "date" ]
+            echo '::set-output name=value_graphql_type::Date'
+          elsif [ "${{ inputs.value_type }}" = "number" ]
+            echo '::set-output name=value_graphql_type::Float'
+          else
+            echo '::set-output name=value_graphql_type::String'
+          fi
         fi
 
     - name: Update field
@@ -165,7 +174,7 @@ runs:
         VALUE_TO_SET: ${{ steps.parse_value.outputs.value_to_set }}
         VALUE: ${{ inputs.value }}
         QUERY: |
-          mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
+          mutation($project: ID!, $item: ID!, $field: ID!, $value: ${{ steps.parse_value.outputs.value_graphql_type }}) {
             updateProjectV2ItemFieldValue(
               input: {
                 projectId: $project
