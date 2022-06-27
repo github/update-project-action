@@ -21,7 +21,7 @@ inputs:
     description: A GitHub Token with access to both the source issue and the destination project (`repo` and `write:org` scopes)
     required: true
   value_type:
-    description: The type of value to update (text, date, number, iterationId, or singleSectionOptionId). See https://docs.github.com/en/graphql/reference/input-objects#projectv2fieldvalue.
+    description: The type of value to update (text, date, number, iterationId, or singleSectionOptionId). Auto-detected for "text" and "single select" fields. Required for all other field types. See https://docs.github.com/en/graphql/reference/input-objects#projectv2fieldvalue.
     required: false
     default: text
 outputs:

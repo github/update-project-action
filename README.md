@@ -51,6 +51,7 @@ The Action is largely feature complete with regards to its initial goals. Find a
 * `organization` - The organization that contains the project, defaults to the current repository owner
 * `project_number` - The project number from the project's URL
 * `value` - The value to set the project field to
+* `value_type` - The type of value to update (text, date, number, iterationId, or singleSectionOptionId). Auto-detected for "text" and "single select" fields. Required for all other field types. See https://docs.github.com/en/graphql/reference/input-objects#projectv2fieldvalue.
 
 ### Outputs
 
