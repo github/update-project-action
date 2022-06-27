@@ -154,9 +154,9 @@ runs:
           echo "::set-output name=value_to_set::$VALUE"
           echo '::set-output name=value_type::'${{ inputs.value_type }}
 
-          if [ "${{ inputs.value_type }}" = "date" ]
+          if [ "${{ inputs.value_type }}" = "date" ]; then
             echo '::set-output name=value_graphql_type::Date'
-          elif [ "${{ inputs.value_type }}" = "number" ]
+          elif [ "${{ inputs.value_type }}" = "number" ]; then
             echo '::set-output name=value_graphql_type::Float'
           else
             echo '::set-output name=value_graphql_type::String'
