@@ -20,6 +20,10 @@ inputs:
   github_token:
     description: A GitHub Token with access to both the source issue and the destination project (`repo` and `write:org` scopes)
     required: true
+  value_type:
+    description: The type of value to update (text, date, number, iterationId, or singleSectionOptionId). See https://docs.github.com/en/graphql/reference/input-objects#projectv2fieldvalue.
+    required: false
+    default: text
 outputs:
   project_id:
     description: "The global ID of the project"
@@ -147,7 +151,7 @@ runs:
           echo '::set-output name=field_type::singleSelectOptionId'
         else
           echo "::set-output name=value_to_set::$VALUE"
-          echo '::set-output name=field_type::text'
+          echo '::set-output name=field_type::'${{ inputs.value_type }}
         fi
 
     - name: Update field
