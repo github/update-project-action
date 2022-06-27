@@ -145,7 +145,7 @@ runs:
         OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
         ITEM_TITLE: ${{ steps.parse_project_metadata.outputs.item_title }}
         QUERY: |
-          mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
+          mutation($project: ID!, $item: ID!, $field: ID!, $value: ProjectV2FieldValue!) {
             updateProjectV2ItemFieldValue(
               input: {
                 projectId: $project
