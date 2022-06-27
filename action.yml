@@ -159,6 +159,7 @@ runs:
         FIELD_ID: ${{ steps.parse_project_metadata.outputs.field_id }}
         ITEM_TITLE: ${{ steps.parse_project_metadata.outputs.item_title }}
         VALUE_TO_SET: ${{ steps.parse_field_type.outputs.value_to_set }}
+        VALUE: ${{ inputs.value }}
         QUERY: |
           mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
             updateProjectV2ItemFieldValue(
