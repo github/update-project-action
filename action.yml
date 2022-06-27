@@ -89,7 +89,7 @@ runs:
       run: |
         # Fetch project metadata
         if [ ! -f "$FILE_NAME" ]; then
-          gh api graphql -f query="$QUERY" -F project_number=$PROJECT_NUMBER -f organization=$ORGANIZATION > "$FILE_NAME"
+          gh api graphql -f query="$QUERY" -F project_number=$PROJECT_NUMBER -F organization=$ORGANIZATION > "$FILE_NAME"
         else
           echo "Using cached project metadata from '$FILE_NAME'"
         fi
@@ -169,7 +169,7 @@ runs:
           export VALUE_TO_SET="$(jq -r '{"text": $VALUE}' -n '{}' --arg VALUE "$VALUE")"
         fi
 
-        gh api graphql -f query="$QUERY" -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value="$VALUE_TO_SET"
+        gh api graphql -f query="$QUERY" -F project=$PROJECT_ID -F item=$ITEM_ID -F field=$FIELD_ID -F value="$VALUE_TO_SET"
 
         echo ""
         echo "Updated field '$FIELD' on '$ITEM_TITLE' to '$VALUE'. Happy reporting! 📈"
