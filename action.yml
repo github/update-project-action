@@ -20,10 +20,6 @@ inputs:
   github_token:
     description: A GitHub Token with access to both the source issue and the destination project (`repo` and `write:org` scopes)
     required: true
-  value_type:
-    description: The type of value to update (text, date, number, iterationId, or singleSectionOptionId). Auto-detected for "text" and "single select" fields. Required for all other field types. See https://docs.github.com/en/graphql/reference/input-objects#projectv2fieldvalue.
-    required: false
-    default: text
 outputs:
   project_id:
     description: "The global ID of the project"
@@ -37,9 +33,9 @@ outputs:
   field_id:
     description: "The global ID of the field"
     value: ${{ steps.parse_project_metadata.outputs.field_id }}
-  field_is_select:
-    description: "Whether or not the field is a select field vs. free-form input"
-    value: ${{ steps.parse_project_metadata.outputs.field_is_select }}
+  field_type:
+    description: "The updated field's ProjectV2FieldType (text, single_select, number, date, or iteration)"
+    value: ${{ steps.parse_project_metadata.outputs.field_type }}
   option_id:
     description: "The global ID of the selected option"
     value: ${{ steps.parse_project_metadata.outputs.option_id }}
@@ -77,6 +73,7 @@ runs:
                     ... on ProjectV2FieldCommon {
                       id
                       name
+                      dataType
                     }
                     ... on ProjectV2SingleSelectField {
                       options {
@@ -114,7 +111,7 @@ runs:
           echo '::set-output name=item_id::'$(jq -r '.data.organization.projectV2.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
           echo '::set-output name=item_title::'$(jq -r '.data.organization.projectV2.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
           echo '::set-output name=field_id::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .id' "$FILE_NAME" --arg FIELD "$FIELD")
-          echo '::set-output name=field_is_select::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | has("options")' "$FILE_NAME" --arg FIELD "$FIELD")
+          echo '::set-output name=field_type::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .dataType |= ascii_downcase' "$FILE_NAME" --arg FIELD "$FIELD")
           echo '::set-output name=option_id::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .options[]? | select(.name | contains($VALUE)) | .id' "$FILE_NAME" --arg VALUE "$VALUE" --arg FIELD "$FIELD")
 
     - name: Ensure project, item, field, and option were found
@@ -127,7 +124,7 @@ runs:
         PROJECT_ID: ${{ steps.parse_project_metadata.outputs.project_id }}
         ITEM_ID: ${{ steps.parse_project_metadata.outputs.item_id }}
         FIELD_ID: ${{ steps.parse_project_metadata.outputs.field_id }}
-        FIELD_IS_SELECT: ${{ steps.parse_project_metadata.outputs.field_is_select }}
+        FIELD_TYPE: ${{ steps.parse_project_metadata.outputs.field_type }}
         OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
       shell: bash
       run: |
@@ -135,28 +132,28 @@ runs:
         if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi
         if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi
         if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi
-        if [[ "$FIELD_IS_SELECT" = "true" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi
+        if [[ "$FIELD_TYPE" = "single_select" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi
     
     - name: Parse value
       shell: bash
       id: parse_value
       env:
-        FIELD_IS_SELECT: ${{ steps.parse_project_metadata.outputs.field_is_select }}
+        FIELD_TYPE: ${{ steps.parse_project_metadata.outputs.field_type }}
         OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
         VALUE: ${{ inputs.value }}
       run: |
         # Parse value
-        if [ "$FIELD_IS_SELECT" = "true" ]; then
+        if [ "$FIELD_TYPE" = "single_select" ]; then
           echo "::set-output name=value_to_set::$OPTION_ID"
           echo '::set-output name=value_type::singleSelectOptionId'
           echo '::set-output name=value_graphql_type::String'
         else
           echo "::set-output name=value_to_set::$VALUE"
-          echo '::set-output name=value_type::'${{ inputs.value_type }}
+          echo "::set-output name=value_type::$FIELD_TYPE"
 
-          if [ "${{ inputs.value_type }}" = "date" ]; then
+          if [ "$FIELD_TYPE" = "date" ]; then
             echo '::set-output name=value_graphql_type::Date'
-          elif [ "${{ inputs.value_type }}" = "number" ]; then
+          elif [ "$FIELD_TYPE" = "number" ]; then
             echo '::set-output name=value_graphql_type::Float'
           else
             echo '::set-output name=value_graphql_type::String'

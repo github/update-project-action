@@ -51,12 +51,10 @@ The Action is largely feature complete with regards to its initial goals. Find a
 * `organization` - The organization that contains the project, defaults to the current repository owner
 * `project_number` - The project number from the project's URL
 * `value` - The value to set the project field to
-* `value_type` - The type of value to update (text, date, number, iterationId, or singleSectionOptionId). Auto-detected for "text" and "single select" fields. Required for all other field types. See https://docs.github.com/en/graphql/reference/input-objects#projectv2fieldvalue.
-
 ### Outputs
 
 * `field_id` - The global ID of the field
-* `field_is_select` - Whether or not the field is a select field vs. free-form input
+* `field_type` - The updated field's ProjectV2FieldType (text, single_select, number, date, or iteration)
 * `item_id` - The global ID of the issue or pull request
 * `item_title` - The title of the issue or pull request
 * `option_id` - The global ID of the selected option
@@ -64,4 +62,4 @@ The Action is largely feature complete with regards to its initial goals. Find a
 
 ### V1 vs V2
 
-In June 2022, [GitHub announced a breaking change to the Projects API](https://github.blog/changelog/2022-06-23-the-new-github-issues-june-23rd-update/). As such, the `@v1` tag of this action will cease working on October 1st, 2022.  You can upgrade to the `@v2` tag (by updating the reference in your Workflow file) at any time. Text and single selection fields will not require any additional changes. Date, Number, and Iteration fields will require you to supply a `value_type`, when using `v2` of this Action.
+In June 2022, [GitHub announced a breaking change to the Projects API](https://github.blog/changelog/2022-06-23-the-new-github-issues-june-23rd-update/). As such, the `@v1` tag of this action will cease working on October 1st, 2022.  You can upgrade to the `@v2` tag (by updating the reference in your Workflow file) at any time.
