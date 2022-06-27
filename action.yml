@@ -139,10 +139,10 @@ runs:
       run: |
         # Parse field type
         if [ "$FIELD_IS_SELECT" = "true" ]; then
-          echo '::set-output name=value_to_set::"$OPTION_ID"'
+          echo "::set-output name=value_to_set::$OPTION_ID"
           echo '::set-output name=field_type::singleSelectOptionId'
         else
-          echo '::set-output name=value_to_set::"$VALUE"'
+          echo "::set-output name=value_to_set::$VALUE"
           echo '::set-output name=field_type::text'
         fi
 
