@@ -136,6 +136,10 @@ runs:
     - name: Parse field type
       shell: bash
       id: parse_field_type
+      env:
+        FIELD_IS_SELECT: ${{ steps.parse_project_metadata.outputs.field_is_select }}
+        OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
+        VALUE: ${{ inputs.value }}
       run: |
         # Parse field type
         if [ "$FIELD_IS_SELECT" = "true" ]; then
@@ -150,12 +154,9 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         FIELD: ${{ inputs.field }}
-        VALUE: ${{ inputs.value }}
         PROJECT_ID: ${{ steps.parse_project_metadata.outputs.project_id }}
         ITEM_ID: ${{ steps.parse_project_metadata.outputs.item_id }}
         FIELD_ID: ${{ steps.parse_project_metadata.outputs.field_id }}
-        FIELD_IS_SELECT: ${{ steps.parse_project_metadata.outputs.field_is_select }}
-        OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
         ITEM_TITLE: ${{ steps.parse_project_metadata.outputs.item_title }}
         VALUE_TO_SET: ${{ steps.parse_field_type.outputs.value_to_set }}
         QUERY: |
