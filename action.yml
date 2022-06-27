@@ -133,7 +133,7 @@ runs:
         if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi
         if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi
         if [[ "$FIELD_TYPE" = "single_select" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi
-    
+
     - name: Parse value
       shell: bash
       id: parse_value
