@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Update status
-        uses: benbalter/update-project-action@v1
+        uses: benbalter/update-project-action@v2
         with:
           github_token: ${{ secrets.STATUS_UPDATE_TOKEN }}
           organization: github
@@ -51,12 +51,15 @@ The Action is largely feature complete with regards to its initial goals. Find a
 * `organization` - The organization that contains the project, defaults to the current repository owner
 * `project_number` - The project number from the project's URL
 * `value` - The value to set the project field to
-
 ### Outputs
 
 * `field_id` - The global ID of the field
-* `field_is_select` - Whether or not the field is a select field vs. free-form input
+* `field_type` - The updated field's ProjectV2FieldType (text, single_select, number, date, or iteration)
 * `item_id` - The global ID of the issue or pull request
 * `item_title` - The title of the issue or pull request
 * `option_id` - The global ID of the selected option
 * `project_id` - The global ID of the project
+
+### V1 vs V2
+
+In June 2022, [GitHub announced a breaking change to the Projects API](https://github.blog/changelog/2022-06-23-the-new-github-issues-june-23rd-update/). As such, the `@v1` tag of this action will cease working on October 1st, 2022.  You can upgrade to the `@v2` tag (by updating the reference in your Workflow file) at any time.

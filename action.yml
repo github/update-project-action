@@ -33,9 +33,9 @@ outputs:
   field_id:
     description: "The global ID of the field"
     value: ${{ steps.parse_project_metadata.outputs.field_id }}
-  field_is_select:
-    description: "Whether or not the field is a select field vs. free-form input"
-    value: ${{ steps.parse_project_metadata.outputs.field_is_select }}
+  field_type:
+    description: "The updated field's ProjectV2FieldType (text, single_select, number, date, or iteration)"
+    value: ${{ steps.parse_project_metadata.outputs.field_type }}
   option_id:
     description: "The global ID of the selected option"
     value: ${{ steps.parse_project_metadata.outputs.option_id }}
@@ -52,36 +52,45 @@ runs:
         CONTENT_ID: ${{ inputs.content_id }}
         VALUE: ${{ inputs.value }}
         FILE_NAME: project-${{ inputs.organization }}-${{ inputs.project_number }}.json
-      shell: bash
-      run: |
-        # Fetch project metadata
-        if [ ! -f "$FILE_NAME" ]; then
-          gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
-            query($organization: String!, $project_number: Int!) {
-              organization(login: $organization) {
-                projectNext(number: $project_number) {
-                  id
-                  items(first: 100) {
-                    nodes {
-                      id
-                      content {
-                        ... on Issue {
-                          id
-                          title
-                        }
+        QUERY: |
+          query ($organization: String!, $project_number: Int!) {
+            organization(login: $organization) {
+              projectV2(number: $project_number) {
+                id
+                items(first: 100) {
+                  nodes {
+                    id
+                    content {
+                      ... on Issue {
+                        id
+                        title
                       }
                     }
                   }
-                  fields(first: 25) {
-                    nodes {
+                }
+                fields(first: 25) {
+                  nodes {
+                    ... on ProjectV2FieldCommon {
                       id
                       name
-                      settings
+                      dataType
+                    }
+                    ... on ProjectV2SingleSelectField {
+                      options {
+                        id
+                        name
+                      }
                     }
                   }
                 }
               }
-            }' -F project_number=$PROJECT_NUMBER -f organization=$ORGANIZATION > "$FILE_NAME"
+            }
+          }
+      shell: bash
+      run: |
+        # Fetch project metadata
+        if [ ! -f "$FILE_NAME" ]; then
+          gh api graphql -f query="$QUERY" -F project_number=$PROJECT_NUMBER -F organization=$ORGANIZATION > "$FILE_NAME"
         else
           echo "Using cached project metadata from '$FILE_NAME'"
         fi
@@ -98,12 +107,12 @@ runs:
         FILE_NAME: ${{ steps.fetch_project_metadata.outputs.file_name }}
       run: |
           # Parse project metadata
-          echo '::set-output name=project_id::'$(jq -r '.data.organization.projectNext.id' "$FILE_NAME")
-          echo '::set-output name=item_id::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
-          echo '::set-output name=item_title::'$(jq -r '.data.organization.projectNext.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
-          echo '::set-output name=field_id::'$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .id' "$FILE_NAME" --arg FIELD "$FIELD")
-          echo '::set-output name=field_is_select::'$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | has("options")' "$FILE_NAME" --arg FIELD "$FIELD")
-          echo '::set-output name=option_id::'$(jq -r '.data.organization.projectNext.fields.nodes[] | select(.name==$FIELD) | .settings | fromjson | .options[]? | select(.name | contains($VALUE)) | .id' "$FILE_NAME" --arg VALUE "$VALUE" --arg FIELD "$FIELD")
+          echo '::set-output name=project_id::'$(jq -r '.data.organization.projectV2.id' "$FILE_NAME")
+          echo '::set-output name=item_id::'$(jq -r '.data.organization.projectV2.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
+          echo '::set-output name=item_title::'$(jq -r '.data.organization.projectV2.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
+          echo '::set-output name=field_id::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .id' "$FILE_NAME" --arg FIELD "$FIELD")
+          echo '::set-output name=field_type::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .dataType | ascii_downcase' "$FILE_NAME" --arg FIELD "$FIELD")
+          echo '::set-output name=option_id::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .options[]? | select(.name | contains($VALUE)) | .id' "$FILE_NAME" --arg VALUE "$VALUE" --arg FIELD "$FIELD")
 
     - name: Ensure project, item, field, and option were found
       env:
@@ -115,7 +124,7 @@ runs:
         PROJECT_ID: ${{ steps.parse_project_metadata.outputs.project_id }}
         ITEM_ID: ${{ steps.parse_project_metadata.outputs.item_id }}
         FIELD_ID: ${{ steps.parse_project_metadata.outputs.field_id }}
-        FIELD_IS_SELECT: ${{ steps.parse_project_metadata.outputs.field_is_select }}
+        FIELD_TYPE: ${{ steps.parse_project_metadata.outputs.field_type }}
         OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
       shell: bash
       run: |
@@ -123,30 +132,57 @@ runs:
         if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi
         if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi
         if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi
-        if [[ "$FIELD_IS_SELECT" = "true" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi
+        if [[ "$FIELD_TYPE" = "single_select" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi
+
+    - name: Parse value
+      shell: bash
+      id: parse_value
+      env:
+        FIELD_TYPE: ${{ steps.parse_project_metadata.outputs.field_type }}
+        OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
+        VALUE: ${{ inputs.value }}
+      run: |
+        # Parse value
+        if [ "$FIELD_TYPE" = "single_select" ]; then
+          echo "::set-output name=value_to_set::$OPTION_ID"
+          echo '::set-output name=value_type::singleSelectOptionId'
+        else
+          echo "::set-output name=value_to_set::$VALUE"
+          echo "::set-output name=value_type::$FIELD_TYPE"
+        fi
+
+        # Set GraphQL Field Type
+        if [ "$FIELD_TYPE" = "date" ]; then
+          echo '::set-output name=value_graphql_type::Date'
+        elif [ "$FIELD_TYPE" = "number" ]; then
+          echo '::set-output name=value_graphql_type::Float'
+        else
+          echo '::set-output name=value_graphql_type::String'
+        fi
 
     - name: Update field
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         FIELD: ${{ inputs.field }}
-        VALUE: ${{ inputs.value }}
         PROJECT_ID: ${{ steps.parse_project_metadata.outputs.project_id }}
         ITEM_ID: ${{ steps.parse_project_metadata.outputs.item_id }}
         FIELD_ID: ${{ steps.parse_project_metadata.outputs.field_id }}
-        FIELD_IS_SELECT: ${{ steps.parse_project_metadata.outputs.field_is_select }}
-        OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
         ITEM_TITLE: ${{ steps.parse_project_metadata.outputs.item_title }}
+        VALUE_TO_SET: ${{ steps.parse_value.outputs.value_to_set }}
+        VALUE: ${{ inputs.value }}
         QUERY: |
-          mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
-            updateProjectNextItemField(
+          mutation($project: ID!, $item: ID!, $field: ID!, $value: ${{ steps.parse_value.outputs.value_graphql_type }}) {
+            updateProjectV2ItemFieldValue(
               input: {
                 projectId: $project
                 itemId: $item
                 fieldId: $field
-                value: $value
+                value: {
+                  ${{ steps.parse_value.outputs.value_type }}: $value
+                }
               }
             ) {
-              projectNextItem {
+              projectV2Item {
                 id
               }
             }
@@ -154,14 +190,8 @@ runs:
 
       shell: bash
       run: |
-        # Update field
-        if [ "$FIELD_IS_SELECT" = "true" ]; then
-          export VALUE_TO_SET="$OPTION_ID"
-        else
-          export VALUE_TO_SET="$VALUE"
-        fi
-
-        gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query="$QUERY" -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value="$VALUE_TO_SET"
+        # Update project
+        gh api graphql -f query="$QUERY" -F project=$PROJECT_ID -F item=$ITEM_ID -F field=$FIELD_ID -F value="$VALUE_TO_SET"
 
         echo ""
         echo "Updated field '$FIELD' on '$ITEM_TITLE' to '$VALUE'. Happy reporting! 📈"
