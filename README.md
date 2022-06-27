@@ -61,3 +61,7 @@ The Action is largely feature complete with regards to its initial goals. Find a
 * `item_title` - The title of the issue or pull request
 * `option_id` - The global ID of the selected option
 * `project_id` - The global ID of the project
+
+### V1 vs V2
+
+In June 2022, [GitHub announced a breaking change to the Projects API](https://github.blog/changelog/2022-06-23-the-new-github-issues-june-23rd-update/). As such, the `@v1` tag of this action will cease working on October 1st, 2022.  You can upgrade to the `@v2` tag (by updating the reference in your Workflow file) at any time. Text and single selection fields will not require any additional changes. Date, Number, and Iteration fields will require you to supply a `value_type`, when using `v2` of this Action.
