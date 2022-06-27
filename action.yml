@@ -132,6 +132,18 @@ runs:
         if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi
         if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi
         if [[ "$FIELD_IS_SELECT" = "true" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi
+    
+    - name: Parse field type
+      shell: bash
+      id: parse_field_type
+      run: |
+        if [ "$FIELD_IS_SELECT" = "true" ]; then
+          export VALUE_TO_SET="$OPTION_ID"
+          echo '::set-output name=field_type::singleSelectOptionId'
+        else
+          export VALUE_TO_SET="$VALUE"
+          echo '::set-output name=field_type::text'
+        fi
 
     - name: Update field
       env:
@@ -145,13 +157,15 @@ runs:
         OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
         ITEM_TITLE: ${{ steps.parse_project_metadata.outputs.item_title }}
         QUERY: |
-          mutation($project: ID!, $item: ID!, $field: ID!, $value: ProjectV2FieldValue!) {
+          mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
             updateProjectV2ItemFieldValue(
               input: {
                 projectId: $project
                 itemId: $item
                 fieldId: $field
-                value: $value
+                value: {
+                  ${{ steps.parse_field_type.outputs.field_type }}: $value
+                }
               }
             ) {
               projectV2Item {
@@ -162,13 +176,6 @@ runs:
 
       shell: bash
       run: |
-        # Update field
-        if [ "$FIELD_IS_SELECT" = "true" ]; then
-          export VALUE_TO_SET="$(jq -r '{"singleSelectOptionId": $OPTION_ID}' -n '{}' --arg OPTION_ID "$OPTION_ID")"
-        else
-          export VALUE_TO_SET="$(jq -r '{"text": $VALUE}' -n '{}' --arg VALUE "$VALUE")"
-        fi
-
         gh api graphql -f query="$QUERY" -F project=$PROJECT_ID -F item=$ITEM_ID -F field=$FIELD_ID -F value="$VALUE_TO_SET"
 
         echo ""
