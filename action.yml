@@ -52,36 +52,44 @@ runs:
         CONTENT_ID: ${{ inputs.content_id }}
         VALUE: ${{ inputs.value }}
         FILE_NAME: project-${{ inputs.organization }}-${{ inputs.project_number }}.json
-      shell: bash
-      run: |
-        # Fetch project metadata
-        if [ ! -f "$FILE_NAME" ]; then
-          gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
-            query($organization: String!, $project_number: Int!) {
-              organization(login: $organization) {
-                projectNext(number: $project_number) {
-                  id
-                  items(first: 100) {
-                    nodes {
-                      id
-                      content {
-                        ... on Issue {
-                          id
-                          title
-                        }
+        QUERY: |
+          query ($organization: String!, $project_number: Int!) {
+            organization(login: $organization) {
+              projectV2(number: $project_number) {
+                id
+                items(first: 100) {
+                  nodes {
+                    id
+                    content {
+                      ... on Issue {
+                        id
+                        title
                       }
                     }
                   }
-                  fields(first: 25) {
-                    nodes {
+                }
+                fields(first: 25) {
+                  nodes {
+                    ... on ProjectV2FieldCommon {
                       id
                       name
-                      settings
+                    }
+                    ... on ProjectV2SingleSelectField {
+                      options {
+                        id
+                        name
+                      }
                     }
                   }
                 }
               }
-            }' -F project_number=$PROJECT_NUMBER -f organization=$ORGANIZATION > "$FILE_NAME"
+            }
+          }
+      shell: bash
+      run: |
+        # Fetch project metadata
+        if [ ! -f "$FILE_NAME" ]; then
+          gh api graphql -f query="$QUERY" -F project_number=$PROJECT_NUMBER -f organization=$ORGANIZATION > "$FILE_NAME"
         else
           echo "Using cached project metadata from '$FILE_NAME'"
         fi
@@ -138,7 +146,7 @@ runs:
         ITEM_TITLE: ${{ steps.parse_project_metadata.outputs.item_title }}
         QUERY: |
           mutation($project: ID!, $item: ID!, $field: ID!, $value: String!) {
-            updateProjectNextItemField(
+            updateProjectV2ItemFieldValue(
               input: {
                 projectId: $project
                 itemId: $item
@@ -146,7 +154,7 @@ runs:
                 value: $value
               }
             ) {
-              projectNextItem {
+              projectV2Item {
                 id
               }
             }
@@ -161,7 +169,7 @@ runs:
           export VALUE_TO_SET="$VALUE"
         fi
 
-        gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query="$QUERY" -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value="$VALUE_TO_SET"
+        gh api graphql -f query="$QUERY" -f project=$PROJECT_ID -f item=$ITEM_ID -f field=$FIELD_ID -f value="$VALUE_TO_SET"
 
         echo ""
         echo "Updated field '$FIELD' on '$ITEM_TITLE' to '$VALUE'. Happy reporting! 📈"
