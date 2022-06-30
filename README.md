@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Update status
-        uses: benbalter/update-project-action@v2
+        uses: github/update-project-action@v2
         with:
           github_token: ${{ secrets.STATUS_UPDATE_TOKEN }}
           organization: github
