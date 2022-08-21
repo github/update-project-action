@@ -60,6 +60,14 @@ runs:
                     id
                     project {
                       number
+                      owner {
+                        ... on Organization {
+                          login
+                        }
+                        ... on User {
+                          login
+                        }
+                      }
                     }
                   }
                 }
@@ -82,10 +90,11 @@ runs:
       shell: bash
       env:
         PROJECT_NUMBER: ${{ inputs.project_number }}
+        OWNER: ${{ inputs.organization }}
         FILE_NAME: ${{ steps.fetch_content_metadata.outputs.file_name }}
       run: |
           # Parse content metadata
-          echo "::set-output name=item_id::"$(jq -r ".data.node.projectItems.nodes | .[] | select(.project.number==${PROJECT_NUMBER}).id" "$FILE_NAME")
+          echo '::set-output name=item_id::'$(jq -r '.data.node.projectItems.nodes | .[] | select(.project.number==($PROJECT_NUMBER|fromjson) and .project.owner.login==$OWNER).id' "$FILE_NAME" --arg OWNER "$OWNER" --arg PROJECT_NUMBER "$PROJECT_NUMBER")
           echo '::set-output name=item_title::'$(jq -r '.data.node.title' "$FILE_NAME")
 
     - name: Ensure content item was found
