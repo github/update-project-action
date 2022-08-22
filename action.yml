@@ -42,13 +42,12 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Fetch content metadata
+    - name: Fetch content ID and title
       id: fetch_content_metadata
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
-        FIELD: ${{ inputs.field }}
         CONTENT_ID: ${{ inputs.content_id }}
-        FILE_NAME: project-${{ inputs.organization }}-${{ inputs.project_number }}_content.json
+        FILE_NAME: organization-${{ inputs.organization }}-issue-${{ inputs.content_id }}.json
         QUERY: |
           query($issue_id: ID!) {
             node(id: $issue_id) {
@@ -78,14 +77,14 @@ runs:
       run: |
         # Fetch project fields metadata
         if [ ! -f "$FILE_NAME" ]; then
-          gh api graphql -f query="$QUERY" -F project_number="$PROJECT_NUMBER" -F issue_id="$CONTENT_ID" -F field_name="$FIELD" > "$FILE_NAME"
+          gh api graphql -f query="$QUERY" -F issue_id="$CONTENT_ID" > "$FILE_NAME"
         else
           echo "Using cached project fields metadata from '$FILE_NAME'"
         fi
 
         echo "::set-output name=file_name::$FILE_NAME"
 
-    - name: Parse content metadata
+    - name: Parse content ID and title
       id: parse_content_metadata
       shell: bash
       env:
@@ -112,7 +111,7 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         PROJECT_NUMBER: ${{ inputs.project_number }}
         ORGANIZATION: ${{ inputs.organization }}
-        FILE_NAME: project-${{ inputs.organization }}-${{ inputs.project_number }}_project.json
+        FILE_NAME: project-${{ inputs.organization }}-${{ inputs.project_number }}.json
         QUERY: |
           query ($organization: String!, $project_number: Int!) {
             organization(login: $organization) {
