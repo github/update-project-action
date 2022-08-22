@@ -1,12 +1,12 @@
 # Update Project Action
 
-A composite GitHub action that updates an item's fields on a GitHub Projects (beta) board based on a workflow dispatch (or other) event's input.
+A composite GitHub action that updates or gets an item's fields on a GitHub Projects (beta) board based on a workflow dispatch (or other) event's input.
 
 [![CI](https://github.com/benbalter/update-project-action/actions/workflows/ci.yml/badge.svg)](https://github.com/benbalter/update-project-action/actions/workflows/ci.yml)
 
 ## Goals 
 
-* To make it easier to update the fields of a GitHub Project board based on action taken elsewhere within the development process (e.g., status update comments)
+* To make it easier to update/read the fields of a GitHub Project board based on action taken elsewhere within the development process (e.g., status update comments)
 * Keep it simple - Prefer boring technology that others can understand, modify, and contribute to
 * Never force a human to do what a robot can
 
@@ -27,7 +27,20 @@ jobs:
   update_project:
     runs-on: ubuntu-latest
     steps:
+      - name: Read status
+        id: read_status
+        uses: github/update-project-action@v2
+        with:
+          github_token: ${{ secrets.STATUS_UPDATE_TOKEN }}
+          organizatin: github
+          project_number: 1234
+          operation: read
+          content_id: ${{ github.event.client_payload.command.resource.id }}
+      - name: Output status
+        run: |
+          echo "Current status value: ${{ steps.read_status.outputs.field_read_value }}"
       - name: Update status
+        id: update_status
         uses: github/update-project-action@v2
         with:
           github_token: ${{ secrets.STATUS_UPDATE_TOKEN }}
@@ -51,8 +64,12 @@ The Action is largely feature complete with regards to its initial goals. Find a
 * `organization` - The organization that contains the project, defaults to the current repository owner
 * `project_number` - The project number from the project's URL
 * `value` - The value to set the project field to
+* `operation` - Type of the operation (`update` or `read`; default is `update`)
+
 ### Outputs
 
+* `field_read_value` - The value of the field before the update
+* `field_updated_value` - The value of the field after the update (in case of `read` operation equals to `field_read_value`)
 * `field_id` - The global ID of the field
 * `field_type` - The updated field's ProjectV2FieldType (text, single_select, number, date, or iteration)
 * `item_id` - The global ID of the issue or pull request
