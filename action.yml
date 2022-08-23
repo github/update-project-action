@@ -42,33 +42,82 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Fetch project metadata
-      id: fetch_project_metadata
+    - name: Fetch content ID and title
+      id: fetch_content_metadata
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        CONTENT_ID: ${{ inputs.content_id }}
+        FILE_NAME: organization-${{ inputs.organization }}-issue-${{ inputs.content_id }}.json
+        QUERY: |
+          query($issue_id: ID!) {
+            node(id: $issue_id) {
+              ... on Issue {
+                id
+                title
+                projectItems(first: 100) {
+                  nodes {
+                    id
+                    project {
+                      number
+                      owner {
+                        ... on Organization {
+                          login
+                        }
+                        ... on User {
+                          login
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+      shell: bash
+      run: |
+        # Fetch project fields metadata
+        if [ ! -f "$FILE_NAME" ]; then
+          gh api graphql -f query="$QUERY" -F issue_id="$CONTENT_ID" > "$FILE_NAME"
+        else
+          echo "Using cached project fields metadata from '$FILE_NAME'"
+        fi
+
+        echo "::set-output name=file_name::$FILE_NAME"
+
+    - name: Parse content ID and title
+      id: parse_content_metadata
+      shell: bash
+      env:
+        PROJECT_NUMBER: ${{ inputs.project_number }}
+        OWNER: ${{ inputs.organization }}
+        FILE_NAME: ${{ steps.fetch_content_metadata.outputs.file_name }}
+      run: |
+          # Parse content metadata
+          echo '::set-output name=item_id::'$(jq -r '.data.node.projectItems.nodes | .[] | select(.project.number==($PROJECT_NUMBER|fromjson) and .project.owner.login==$OWNER).id' "$FILE_NAME" --arg OWNER "$OWNER" --arg PROJECT_NUMBER "$PROJECT_NUMBER")
+          echo '::set-output name=item_title::'$(jq -r '.data.node.title' "$FILE_NAME")
+
+    - name: Ensure content item was found
+      env:
+        CONTENT_ID: ${{ inputs.content_id }}
+        ITEM_ID: ${{ steps.parse_content_metadata.outputs.item_id }}
+      shell: bash
+      run: |
+        # Ensure content item was found
+        if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi
+
+    - name: Fetch project fields metadata
+      id: fetch_project_fields_metadata
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         PROJECT_NUMBER: ${{ inputs.project_number }}
         ORGANIZATION: ${{ inputs.organization }}
-        FIELD: ${{ inputs.field }}
-        CONTENT_ID: ${{ inputs.content_id }}
-        VALUE: ${{ inputs.value }}
         FILE_NAME: project-${{ inputs.organization }}-${{ inputs.project_number }}.json
         QUERY: |
           query ($organization: String!, $project_number: Int!) {
             organization(login: $organization) {
               projectV2(number: $project_number) {
                 id
-                items(first: 100) {
-                  nodes {
-                    id
-                    content {
-                      ... on Issue {
-                        id
-                        title
-                      }
-                    }
-                  }
-                }
-                fields(first: 25) {
+                fields(first: 100) {
                   nodes {
                     ... on ProjectV2FieldCommon {
                       id
@@ -88,49 +137,43 @@ runs:
           }
       shell: bash
       run: |
-        # Fetch project metadata
+        # Fetch project fields metadata
         if [ ! -f "$FILE_NAME" ]; then
-          gh api graphql -f query="$QUERY" -F project_number=$PROJECT_NUMBER -F organization=$ORGANIZATION > "$FILE_NAME"
+          gh api graphql -f query="$QUERY" -F project_number="$PROJECT_NUMBER" -F organization="$ORGANIZATION" > "$FILE_NAME"
         else
-          echo "Using cached project metadata from '$FILE_NAME'"
+          echo "Using cached project fields metadata from '$FILE_NAME'"
         fi
 
         echo "::set-output name=file_name::$FILE_NAME"
 
-    - name: Parse project metadata
-      id: parse_project_metadata
+    - name: Parse project fields metadata
+      id: parse_project_fields_metadata
       shell: bash
       env:
-        CONTENT_ID: ${{ inputs.content_id }}
-        FIELD: ${{ inputs.field }}
+        FIELD: "${{ inputs.field }}"
         VALUE: ${{ inputs.value }}
-        FILE_NAME: ${{ steps.fetch_project_metadata.outputs.file_name }}
+        FILE_NAME: ${{ steps.fetch_project_fields_metadata.outputs.file_name }}
       run: |
           # Parse project metadata
           echo '::set-output name=project_id::'$(jq -r '.data.organization.projectV2.id' "$FILE_NAME")
-          echo '::set-output name=item_id::'$(jq -r '.data.organization.projectV2.items.nodes[] | select(.content.id==$CONTENT_ID) | .id' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
-          echo '::set-output name=item_title::'$(jq -r '.data.organization.projectV2.items.nodes[] | select(.content.id==$CONTENT_ID) | .content.title' "$FILE_NAME" --arg CONTENT_ID "$CONTENT_ID")
           echo '::set-output name=field_id::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .id' "$FILE_NAME" --arg FIELD "$FIELD")
           echo '::set-output name=field_type::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .dataType | ascii_downcase' "$FILE_NAME" --arg FIELD "$FIELD")
-          echo '::set-output name=option_id::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .options[]? | select(.name | contains($VALUE)) | .id' "$FILE_NAME" --arg VALUE "$VALUE" --arg FIELD "$FIELD")
+          echo '::set-output name=option_id::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .options[]? | select(.name == $VALUE) | .id' "$FILE_NAME" --arg VALUE "$VALUE" --arg FIELD "$FIELD")
 
-    - name: Ensure project, item, field, and option were found
+    - name: Ensure project, field, and option were found
       env:
         PROJECT_NUMBER: ${{ inputs.project_number }}
         ORGANIZATION: ${{ inputs.organization }}
         FIELD: ${{ inputs.field }}
-        CONTENT_ID: ${{ inputs.content_id }}
         VALUE: ${{ inputs.value }}
-        PROJECT_ID: ${{ steps.parse_project_metadata.outputs.project_id }}
-        ITEM_ID: ${{ steps.parse_project_metadata.outputs.item_id }}
-        FIELD_ID: ${{ steps.parse_project_metadata.outputs.field_id }}
-        FIELD_TYPE: ${{ steps.parse_project_metadata.outputs.field_type }}
-        OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
+        PROJECT_ID: ${{ steps.parse_project_fields_metadata.outputs.project_id }}
+        FIELD_ID: ${{ steps.parse_project_fields_metadata.outputs.field_id }}
+        FIELD_TYPE: ${{ steps.parse_project_fields_metadata.outputs.field_type }}
+        OPTION_ID: ${{ steps.parse_project_fields_metadata.outputs.option_id }}
       shell: bash
       run: |
         # Ensure project, item, field, and option were found
         if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi
-        if [ -z "$ITEM_ID" ]; then echo "Item not found with ID '$CONTENT_ID'"; exit 1; fi
         if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi
         if [[ "$FIELD_TYPE" = "single_select" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi
 
@@ -138,8 +181,8 @@ runs:
       shell: bash
       id: parse_value
       env:
-        FIELD_TYPE: ${{ steps.parse_project_metadata.outputs.field_type }}
-        OPTION_ID: ${{ steps.parse_project_metadata.outputs.option_id }}
+        FIELD_TYPE: ${{ steps.parse_project_fields_metadata.outputs.field_type }}
+        OPTION_ID: ${{ steps.parse_project_fields_metadata.outputs.option_id }}
         VALUE: ${{ inputs.value }}
       run: |
         # Parse value
@@ -164,10 +207,10 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         FIELD: ${{ inputs.field }}
-        PROJECT_ID: ${{ steps.parse_project_metadata.outputs.project_id }}
-        ITEM_ID: ${{ steps.parse_project_metadata.outputs.item_id }}
-        FIELD_ID: ${{ steps.parse_project_metadata.outputs.field_id }}
-        ITEM_TITLE: ${{ steps.parse_project_metadata.outputs.item_title }}
+        PROJECT_ID: ${{ steps.parse_project_fields_metadata.outputs.project_id }}
+        ITEM_ID: ${{ steps.parse_content_metadata.outputs.item_id }}
+        FIELD_ID: ${{ steps.parse_project_fields_metadata.outputs.field_id }}
+        ITEM_TITLE: ${{ steps.parse_content_metadata.outputs.item_title }}
         VALUE_TO_SET: ${{ steps.parse_value.outputs.value_to_set }}
         VALUE: ${{ inputs.value }}
         QUERY: |
@@ -187,11 +230,10 @@ runs:
               }
             }
           }
-
       shell: bash
       run: |
         # Update project
-        gh api graphql -f query="$QUERY" -F project=$PROJECT_ID -F item=$ITEM_ID -F field=$FIELD_ID -F value="$VALUE_TO_SET"
+        gh api graphql -f query="$QUERY" -F project="$PROJECT_ID" -F item="$ITEM_ID" -F field="$FIELD_ID" -F value="$VALUE_TO_SET"
 
         echo ""
         echo "Updated field '$FIELD' on '$ITEM_TITLE' to '$VALUE'. Happy reporting! 📈"
