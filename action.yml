@@ -97,7 +97,7 @@ runs:
           echo '::set-output name=item_title::'$(jq -r '.data.node.title' "$FILE_NAME")
 
     - name: Ensure content item was found
-      env:      
+      env:
         CONTENT_ID: ${{ inputs.content_id }}
         ITEM_ID: ${{ steps.parse_content_metadata.outputs.item_id }}
       shell: bash
