@@ -8,6 +8,10 @@ inputs:
   project_number:
     description: The project number from the project's URL
     required: true
+  operation:
+    description: Operation type (update or read)
+    default: update
+    required: false
   content_id:
     description: The global ID of the issue or pull request within the project
     required: true
@@ -33,6 +37,12 @@ outputs:
   field_id:
     description: "The global ID of the field"
     value: ${{ steps.parse_project_metadata.outputs.field_id }}
+  field_read_value:
+    description: "The value of the field before the update"
+    value: ${{ steps.parse_content_metadata.outputs.item_value }}
+  field_updated_value:
+    description: "The value of the field after the update"
+    value: ${{ steps.output_values.outputs.field_updated_value }}
   field_type:
     description: "The updated field's ProjectV2FieldType (text, single_select, number, date, or iteration)"
     value: ${{ steps.parse_project_metadata.outputs.field_type }}
@@ -42,14 +52,25 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Fetch content ID and title
+    - name: Check that the operation type is valid
+      env:
+        OPERATION: ${{ inputs.operation }}
+      shell: bash
+      run: |
+        if [ "$OPERATION" != "read" ] && [ "$OPERATION" != "update" ]; then
+          echo "Invalid value passed for the 'operation' parameter (passed: $OPERATION, allowed: read, update)";
+          exit 1;
+        fi
+    - name: Fetch content ID, value and title
       id: fetch_content_metadata
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         CONTENT_ID: ${{ inputs.content_id }}
+        FIELD_NAME: ${{ inputs.field }}
         FILE_NAME: organization-${{ inputs.organization }}-issue-${{ inputs.content_id }}.json
+        OPERATION: ${{ inputs.operation }}
         QUERY: |
-          query($issue_id: ID!) {
+          query($issue_id: ID!, $field_name: String!) {
             node(id: $issue_id) {
               ... on Issue {
                 id
@@ -59,6 +80,7 @@ runs:
                     id
                     project {
                       number
+
                       owner {
                         ... on Organization {
                           login
@@ -66,6 +88,24 @@ runs:
                         ... on User {
                           login
                         }
+                      }
+                    }
+
+                    field: fieldValueByName(name: $field_name) {
+                      ... on ProjectV2ItemFieldSingleSelectValue {
+                            value: name
+                      }
+
+                      ... on ProjectV2ItemFieldNumberValue {
+                            value: number
+                      }
+
+                      ... on ProjectV2ItemFieldTextValue {
+                            value: text
+                      }
+
+                      ... on ProjectV2ItemFieldDateValue {
+                            value: date
                       }
                     }
                   }
@@ -76,15 +116,15 @@ runs:
       shell: bash
       run: |
         # Fetch project fields metadata
-        if [ ! -f "$FILE_NAME" ]; then
-          gh api graphql -f query="$QUERY" -F issue_id="$CONTENT_ID" > "$FILE_NAME"
+        if [ ! -f "$FILE_NAME" ] || [ "$OPERATION" == "read" ]; then
+          gh api graphql -f query="$QUERY" -F issue_id="$CONTENT_ID" -F field_name="$FIELD_NAME" > "$FILE_NAME"
         else
           echo "Using cached project fields metadata from '$FILE_NAME'"
         fi
 
         echo "::set-output name=file_name::$FILE_NAME"
 
-    - name: Parse content ID and title
+    - name: Parse content ID, value and title
       id: parse_content_metadata
       shell: bash
       env:
@@ -95,6 +135,7 @@ runs:
           # Parse content metadata
           echo '::set-output name=item_id::'$(jq -r '.data.node.projectItems.nodes | .[] | select(.project.number==($PROJECT_NUMBER|fromjson) and .project.owner.login==$OWNER).id' "$FILE_NAME" --arg OWNER "$OWNER" --arg PROJECT_NUMBER "$PROJECT_NUMBER")
           echo '::set-output name=item_title::'$(jq -r '.data.node.title' "$FILE_NAME")
+          echo '::set-output name=item_value::'$(jq -r '.data.node.projectItems.nodes | .[] | select(.project.number==($PROJECT_NUMBER|fromjson) and .project.owner.login==$OWNER).field.value' "$FILE_NAME" --arg OWNER "$OWNER" --arg PROJECT_NUMBER "$PROJECT_NUMBER")
 
     - name: Ensure content item was found
       env:
@@ -175,7 +216,9 @@ runs:
         # Ensure project, item, field, and option were found
         if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi
         if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi
-        if [[ "$FIELD_TYPE" = "single_select" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi
+        if [ "$OPERATION" == "update" ]; then
+          if [[ "$FIELD_TYPE" = "single_select" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi
+        fi
 
     - name: Parse value
       shell: bash
@@ -203,7 +246,20 @@ runs:
           echo '::set-output name=value_graphql_type::String'
         fi
 
+    - name: Output values
+      id: output_values
+      shell: bash
+      env:
+        OPERATION: ${{ inputs.operation }}
+      run: |
+        if [ "$OPERATION" == "read" ]; then
+          echo ''::set-output name=field_updated_value::${{ steps.parse_content_metadata.outputs.item_value }}
+        else
+          echo ''::set-output name=field_updated_value::${{ inputs.value }}
+        fi
+
     - name: Update field
+      if: ${{ inputs.operation == 'update' }}
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         FIELD: ${{ inputs.field }}
