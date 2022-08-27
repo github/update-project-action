@@ -2,7 +2,7 @@ name: Update project
 description: Updates an item's fields on a GitHub Projects (beta) board based on a workflow dispatch (or other) event's input.
 inputs:
   organization:
-    description: The organization that contains the project, defaults to the current repository owner
+    description: The organization or user that owns the project, defaults to the current repository owner
     required: false
     default: ${{ github.repository_owner }}
   project_number:
@@ -61,13 +61,22 @@ runs:
           echo "Invalid value passed for the 'operation' parameter (passed: $OPERATION, allowed: read, update)";
           exit 1;
         fi
+    - name: Determine the owner type
+      id: fetch_owner_type
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        OWNER: ${{ inputs.organization }}
+      shell: bash
+      run: |
+        # returns either 'organization' or 'user'
+        echo "::set-output name=owner_type::$(gh api users/${OWNER} --jq '.type | ascii_downcase')"
     - name: Fetch content ID, value and title
       id: fetch_content_metadata
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         CONTENT_ID: ${{ inputs.content_id }}
         FIELD_NAME: ${{ inputs.field }}
-        FILE_NAME: organization-${{ inputs.organization }}-issue-${{ inputs.content_id }}.json
+        FILE_NAME: owner-${{ inputs.organization }}-issue-${{ inputs.content_id }}.json
         OPERATION: ${{ inputs.operation }}
         QUERY: |
           query($issue_id: ID!, $field_name: String!) {
@@ -115,11 +124,11 @@ runs:
           }
       shell: bash
       run: |
-        # Fetch project fields metadata
+        # Fetch content metadata
         if [ ! -f "$FILE_NAME" ] || [ "$OPERATION" == "read" ]; then
           gh api graphql -f query="$QUERY" -F issue_id="$CONTENT_ID" -F field_name="$FIELD_NAME" > "$FILE_NAME"
         else
-          echo "Using cached project fields metadata from '$FILE_NAME'"
+          echo "Using cached content metadata from '$FILE_NAME'"
         fi
 
         echo "::set-output name=file_name::$FILE_NAME"
@@ -151,11 +160,11 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         PROJECT_NUMBER: ${{ inputs.project_number }}
-        ORGANIZATION: ${{ inputs.organization }}
+        OWNER: ${{ inputs.organization }}
         FILE_NAME: project-${{ inputs.organization }}-${{ inputs.project_number }}.json
         QUERY: |
-          query ($organization: String!, $project_number: Int!) {
-            organization(login: $organization) {
+          query ($owner: String!, $project_number: Int!) {
+            ${{ steps.fetch_owner_type.outputs.owner_type }}(login: $owner) {
               projectV2(number: $project_number) {
                 id
                 fields(first: 100) {
@@ -180,7 +189,7 @@ runs:
       run: |
         # Fetch project fields metadata
         if [ ! -f "$FILE_NAME" ]; then
-          gh api graphql -f query="$QUERY" -F project_number="$PROJECT_NUMBER" -F organization="$ORGANIZATION" > "$FILE_NAME"
+          gh api graphql -f query="$QUERY" -F project_number="$PROJECT_NUMBER" -F owner="$OWNER" > "$FILE_NAME"
         else
           echo "Using cached project fields metadata from '$FILE_NAME'"
         fi
@@ -193,18 +202,19 @@ runs:
       env:
         FIELD: "${{ inputs.field }}"
         VALUE: ${{ inputs.value }}
+        OWNER_TYPE: ${{ steps.fetch_owner_type.outputs.owner_type }}
         FILE_NAME: ${{ steps.fetch_project_fields_metadata.outputs.file_name }}
       run: |
           # Parse project metadata
-          echo '::set-output name=project_id::'$(jq -r '.data.organization.projectV2.id' "$FILE_NAME")
-          echo '::set-output name=field_id::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .id' "$FILE_NAME" --arg FIELD "$FIELD")
-          echo '::set-output name=field_type::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .dataType | ascii_downcase' "$FILE_NAME" --arg FIELD "$FIELD")
-          echo '::set-output name=option_id::'$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .options[]? | select(.name == $VALUE) | .id' "$FILE_NAME" --arg VALUE "$VALUE" --arg FIELD "$FIELD")
+          echo '::set-output name=project_id::'$(jq -r '.data | .[$OWNER_TYPE].projectV2.id' "$FILE_NAME" --arg OWNER_TYPE "$OWNER_TYPE")
+          echo '::set-output name=field_id::'$(jq -r '.data | .[$OWNER_TYPE].projectV2.fields.nodes[] | select(.name==$FIELD) | .id' "$FILE_NAME" --arg FIELD "$FIELD" --arg OWNER_TYPE "$OWNER_TYPE")
+          echo '::set-output name=field_type::'$(jq -r '.data | .[$OWNER_TYPE].projectV2.fields.nodes[] | select(.name==$FIELD) | .dataType | ascii_downcase' "$FILE_NAME" --arg FIELD "$FIELD" --arg OWNER_TYPE "$OWNER_TYPE")
+          echo '::set-output name=option_id::'$(jq -r '.data | .[$OWNER_TYPE].projectV2.fields.nodes[] | select(.name==$FIELD) | .options[]? | select(.name == $VALUE) | .id' "$FILE_NAME" --arg VALUE "$VALUE" --arg FIELD "$FIELD" --arg OWNER_TYPE "$OWNER_TYPE")
 
     - name: Ensure project, field, and option were found
       env:
         PROJECT_NUMBER: ${{ inputs.project_number }}
-        ORGANIZATION: ${{ inputs.organization }}
+        OWNER: ${{ inputs.organization }}
         FIELD: ${{ inputs.field }}
         VALUE: ${{ inputs.value }}
         PROJECT_ID: ${{ steps.parse_project_fields_metadata.outputs.project_id }}
@@ -214,7 +224,7 @@ runs:
       shell: bash
       run: |
         # Ensure project, item, field, and option were found
-        if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then echo "Project '$PROJECT_NUMBER' not found for organization '$ORGANIZATION'"; exit 1; fi
+        if [ -z "$PROJECT_ID" ] || [ "$PROJECT_ID" = "null" ]; then echo "Project '$PROJECT_NUMBER' not found for owner '$OWNER'"; exit 1; fi
         if [ -z "$FIELD_ID" ]; then echo "Field '$FIELD' not found"; exit 1; fi
         if [ "$OPERATION" == "update" ]; then
           if [[ "$FIELD_TYPE" = "single_select" && -z "$OPTION_ID" ]]; then echo "Option not found with value '$VALUE'"; exit 1; fi

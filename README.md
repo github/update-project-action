@@ -61,7 +61,7 @@ The Action is largely feature complete with regards to its initial goals. Find a
 * `content_id` - The global ID of the issue or pull request within the project
 * `field` - The field on the project to set the value of
 * `github_token` - A GitHub Token with access to both the source issue and the destination project (`repo` and `write:org` scopes)
-* `organization` - The organization that contains the project, defaults to the current repository owner
+* `organization` - The owner of the project. Can be an organization or a user, defaults to the current repository owner
 * `project_number` - The project number from the project's URL
 * `value` - The value to set the project field to
 * `operation` - Type of the operation (`update` or `read`; default is `update`)
