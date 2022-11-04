@@ -133,9 +133,12 @@ runs:
         FILE_NAME: ${{ steps.fetch_content_metadata.outputs.file_name }}
       run: |
           # Parse content metadata
-          echo "name=item_id='$(jq -r '.data.node.projectItems.nodes | .[] | select(.project.number==($PROJECT_NUMBER|fromjson) and .project.owner.login==$OWNER).id' ""$FILE_NAME"" --arg OWNER ""$OWNER"" --arg PROJECT_NUMBER ""$PROJECT_NUMBER"")'" >> $GITHUB_OUTPUT
-          echo "name=item_title='$(jq -r '.data.node.title' ""$FILE_NAME"")'" >> $GITHUB_OUTPUT
-          echo "name=item_value='$(jq -r '.data.node.projectItems.nodes | .[] | select(.project.number==($PROJECT_NUMBER|fromjson) and .project.owner.login==$OWNER).field.value' "$FILE_NAME" --arg OWNER "$OWNER" --arg PROJECT_NUMBER "$PROJECT_NUMBER")'" >> $GITHUB_OUTPUT
+          item_id=$(jq -r '.data.node.projectItems.nodes | .[] | select(.project.number==($PROJECT_NUMBER|fromjson) and .project.owner.login==$OWNER).id' ""$FILE_NAME"" --arg OWNER ""$OWNER"" --arg PROJECT_NUMBER ""$PROJECT_NUMBER"")
+          item_title=$(jq -r '.data.node.title' ""$FILE_NAME"")
+          item_value=$(jq -r '.data.node.projectItems.nodes | .[] | select(.project.number==($PROJECT_NUMBER|fromjson) and .project.owner.login==$OWNER).field.value' "$FILE_NAME" --arg OWNER "$OWNER" --arg PROJECT_NUMBER "$PROJECT_NUMBER")
+          echo "name=item_id='$item_id'" >> $GITHUB_OUTPUT
+          echo "name=item_title='$item_title'" >> $GITHUB_OUTPUT
+          echo "name=item_value='$item_value'" >> $GITHUB_OUTPUT
 
     - name: Ensure content item was found
       env:
