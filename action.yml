@@ -135,15 +135,9 @@ runs:
           item_id=$(jq -r '.data.node.projectItems.nodes | .[] | select(.project.number==($PROJECT_NUMBER|fromjson) and .project.owner.login==$OWNER).id' "$FILE_NAME" --arg OWNER "$OWNER" --arg PROJECT_NUMBER "$PROJECT_NUMBER")
           item_title=$(jq -r '.data.node.title' "$FILE_NAME")
           item_value=$(jq -r '.data.node.projectItems.nodes | .[] | select(.project.number==($PROJECT_NUMBER|fromjson) and .project.owner.login==$OWNER).field.value' "$FILE_NAME" --arg OWNER "$OWNER" --arg PROJECT_NUMBER "$PROJECT_NUMBER")
-          echo item_id $item_id
-          echo item_title $item_title
-          echo item_value $item_value
-          echo ""
           echo "item_id=$item_id" >> $GITHUB_OUTPUT
           echo "item_title=$item_title" >> $GITHUB_OUTPUT
           echo "item_value=$item_value" >> $GITHUB_OUTPUT
-          cat $GITHUB_OUTPUT
-
     - name: Ensure content item was found
       env:
         CONTENT_ID: ${{ inputs.content_id }}
@@ -203,10 +197,14 @@ runs:
         FILE_NAME: ${{ steps.fetch_project_fields_metadata.outputs.file_name }}
       run: |
           # Parse project metadata
-          echo "project_id='$(jq -r '.data.organization.projectV2.id' ""$FILE_NAME""")"  >> $GITHUB_OUTPUT
-          echo "field_id='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .id' ""$FILE_NAME"" --arg FIELD ""$FIELD""")"  >> $GITHUB_OUTPUT
-          echo "field_type='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .dataType | ascii_downcase' ""$FILE_NAME"" --arg FIELD ""$FIELD"")"  >> $GITHUB_OUTPUT
-          echo "option_id='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .options[]? | select(.name == $VALUE) | .id' ""$FILE_NAME"" --arg VALUE ""$VALUE"" --arg FIELD ""$FIELD"")"  >> $GITHUB_OUTPUT
+          project_id=$(jq -r '.data.organization.projectV2.id' "$FILE_NAME")
+          field_id=$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .id' "$FILE_NAME" --arg FIELD "$FIELD")
+          field_type=$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .dataType | ascii_downcase' "$FILE_NAME" --arg FIELD "$FIELD")
+          option_id=$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .options[]? | select(.name == $VALUE) | .id' "$FILE_NAME" --arg VALUE "$VALUE" --arg FIELD "$FIELD")
+          echo "project_id=$project_id" >> $GITHUB_OUTPUT
+          echo "field_id=$field_id" >> $GITHUB_OUTPUT
+          echo "field_type=$field_type" >> $GITHUB_OUTPUT
+          echo "option_id=$option_id"  >> $GITHUB_OUTPUT
 
     - name: Ensure project, field, and option were found
       env:
