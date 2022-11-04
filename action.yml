@@ -121,8 +121,9 @@ runs:
         else
           echo "Using cached project fields metadata from '$FILE_NAME'"
         fi
-
+        echo $FILENAME
         echo "name=file_name=$FILE_NAME" >> $GITHUB_OUTPUT
+        cat $GITHUB_OUTPUT
 
     - name: Parse content ID, value and title
       id: parse_content_metadata
