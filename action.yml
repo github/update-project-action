@@ -121,7 +121,7 @@ runs:
           gh api graphql -f query="$QUERY" -F issue_id="$CONTENT_ID" -F field_name="$FIELD_NAME" > "$FILE_NAME"
         else
           echo "Using cached project fields metadata from '$FILE_NAME'"
-        fi"
+        fi
 
     - name: Parse content ID, value and title
       id: parse_content_metadata
