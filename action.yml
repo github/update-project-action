@@ -138,6 +138,7 @@ runs:
           echo item_id $item_id
           echo item_title $item_title
           echo item_value $item_value
+          cat $FILE_NAME
           echo "name=item_id='$item_id'" >> $GITHUB_OUTPUT
           echo "name=item_title='$item_title'" >> $GITHUB_OUTPUT
           echo "name=item_value='$item_value'" >> $GITHUB_OUTPUT
