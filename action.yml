@@ -121,7 +121,7 @@ runs:
           gh api graphql -f query="$QUERY" -F issue_id="$CONTENT_ID" -F field_name="$FIELD_NAME" > "$FILE_NAME"
         else
           echo "Using cached project fields metadata from '$FILE_NAME'"
-        fi
+        fi"
 
     - name: Parse content ID, value and title
       id: parse_content_metadata
@@ -139,9 +139,9 @@ runs:
           echo item_title $item_title
           echo item_value $item_value
           echo ""
-          echo "name=item_id=$item_id" >> $GITHUB_OUTPUT
-          echo "name=item_title=$item_title" >> $GITHUB_OUTPUT
-          echo "name=item_value=$item_value" >> $GITHUB_OUTPUT
+          echo "item_id=$item_id" >> $GITHUB_OUTPUT
+          echo "item_title=$item_title" >> $GITHUB_OUTPUT
+          echo "item_value=$item_value" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
 
     - name: Ensure content item was found
@@ -192,7 +192,7 @@ runs:
           echo "Using cached project fields metadata from '$FILE_NAME'"
         fi
 
-        echo "name=file_name=$FILE_NAME" >> $GITHUB_OUTPUT
+        echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
 
     - name: Parse project fields metadata
       id: parse_project_fields_metadata
@@ -203,10 +203,10 @@ runs:
         FILE_NAME: ${{ steps.fetch_project_fields_metadata.outputs.file_name }}
       run: |
           # Parse project metadata
-          echo "name=project_id='$(jq -r '.data.organization.projectV2.id' ""$FILE_NAME""")"  >> $GITHUB_OUTPUT
-          echo "name=field_id='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .id' ""$FILE_NAME"" --arg FIELD ""$FIELD""")"  >> $GITHUB_OUTPUT
-          echo "name=field_type='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .dataType | ascii_downcase' ""$FILE_NAME"" --arg FIELD ""$FIELD"")"  >> $GITHUB_OUTPUT
-          echo "name=option_id='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .options[]? | select(.name == $VALUE) | .id' ""$FILE_NAME"" --arg VALUE ""$VALUE"" --arg FIELD ""$FIELD"")"  >> $GITHUB_OUTPUT
+          echo "project_id='$(jq -r '.data.organization.projectV2.id' ""$FILE_NAME""")"  >> $GITHUB_OUTPUT
+          echo "field_id='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .id' ""$FILE_NAME"" --arg FIELD ""$FIELD""")"  >> $GITHUB_OUTPUT
+          echo "field_type='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .dataType | ascii_downcase' ""$FILE_NAME"" --arg FIELD ""$FIELD"")"  >> $GITHUB_OUTPUT
+          echo "option_id='$(jq -r '.data.organization.projectV2.fields.nodes[] | select(.name==$FIELD) | .options[]? | select(.name == $VALUE) | .id' ""$FILE_NAME"" --arg VALUE ""$VALUE"" --arg FIELD ""$FIELD"")"  >> $GITHUB_OUTPUT
 
     - name: Ensure project, field, and option were found
       env:
@@ -237,20 +237,20 @@ runs:
       run: |
         # Parse value
         if [ "$FIELD_TYPE" = "single_select" ]; then
-          echo "name=value_to_set=$OPTION_ID" >> $GITHUB_OUTPUT
-          echo 'name=value_type=singleSelectOptionId' >> $GITHUB_OUTPUT
+          echo "value_to_set=$OPTION_ID" >> $GITHUB_OUTPUT
+          echo 'value_type=singleSelectOptionId' >> $GITHUB_OUTPUT
         else
-          echo "name=value_to_set=$VALUE" >> $GITHUB_OUTPUT
-          echo "name=value_type=$FIELD_TYPE" >> $GITHUB_OUTPUT
+          echo "value_to_set=$VALUE" >> $GITHUB_OUTPUT
+          echo "value_type=$FIELD_TYPE" >> $GITHUB_OUTPUT
         fi
 
         # Set GraphQL Field Type
         if [ "$FIELD_TYPE" = "date" ]; then
-          echo 'name=value_graphql_type=Date' >> $GITHUB_OUTPUT
+          echo 'value_graphql_type=Date' >> $GITHUB_OUTPUT
         elif [ "$FIELD_TYPE" = "number" ]; then
-          echo 'name=value_graphql_type=Float' >> $GITHUB_OUTPUT
+          echo 'value_graphql_type=Float' >> $GITHUB_OUTPUT
         else
-          echo 'name=value_graphql_type=String' >> $GITHUB_OUTPUT
+          echo 'value_graphql_type=String' >> $GITHUB_OUTPUT
         fi
 
     - name: Output values
@@ -260,9 +260,9 @@ runs:
         OPERATION: ${{ inputs.operation }}
       run: |
         if [ "$OPERATION" == "read" ]; then
-          echo "name=field_updated_value="${{ steps.parse_content_metadata.outputs.item_value }} >> $GITHUB_OUTPUT
+          echo "field_updated_value="${{ steps.parse_content_metadata.outputs.item_value }} >> $GITHUB_OUTPUT
         else
-          echo "name=field_updated_value="${{ inputs.value }} >> $GITHUB_OUTPUT
+          echo "field_updated_value="${{ inputs.value }} >> $GITHUB_OUTPUT
         fi
 
     - name: Update field
