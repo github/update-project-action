@@ -115,13 +115,13 @@ runs:
           }
       shell: bash
       run: |
-        set -ex
         # Fetch project fields metadata
         if [ ! -f "$FILE_NAME" ] || [ "$OPERATION" == "read" ]; then
           gh api graphql -f query="$QUERY" -F issue_id="$CONTENT_ID" -F field_name="$FIELD_NAME" > "$FILE_NAME"
         else
           echo "Using cached project fields metadata from '$FILE_NAME'"
         fi
+        echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
 
     - name: Parse content ID, value and title
       id: parse_content_metadata
@@ -129,7 +129,7 @@ runs:
       env:
         PROJECT_NUMBER: ${{ inputs.project_number }}
         OWNER: ${{ inputs.organization }}
-        FILE_NAME: organization-${{ inputs.organization }}-issue-${{ inputs.content_id }}.json
+        FILE_NAME: ${{ steps.fetch_content_metadata.outputs.file_name }}
       run: |
           # Parse content metadata
           item_id=$(jq -r '.data.node.projectItems.nodes | .[] | select(.project.number==($PROJECT_NUMBER|fromjson) and .project.owner.login==$OWNER).id' "$FILE_NAME" --arg OWNER "$OWNER" --arg PROJECT_NUMBER "$PROJECT_NUMBER")
