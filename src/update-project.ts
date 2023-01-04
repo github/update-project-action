@@ -124,7 +124,7 @@ export async function fetchProjectMetadata(
   // Ensure project was found
   if (
     !ensureExists(
-      result.organization.projectV2.id,
+      result.organization.projectV2?.id,
       "project",
       `Number ${projectNumber}, Owner ${owner}`
     )
@@ -141,7 +141,7 @@ export async function fetchProjectMetadata(
     return {};
   }
 
-  const option = field.options.find(
+  const option = field.options?.find(
     (o: GraphQlQueryResponseData) => o.name === value
   );
 
@@ -291,13 +291,11 @@ export function getInputs(): { [key: string]: any } {
  * @param options - Octokit options
  */
 export function setupOctokit(options?: { [key: string]: any }): void {
-  const token = getInput("token");
+  const token = getInput("token", { required: true });
   octokit = getOctokit(token, options);
 }
 
 export async function run(): Promise<void> {
-  setupOctokit();
-
   const inputs = getInputs();
   if (Object.entries(inputs).length === 0) return;
 

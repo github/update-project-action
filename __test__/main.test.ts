@@ -1,6 +1,7 @@
 import { resourceLimits } from "worker_threads";
 import * as updateProject from "../src/update-project";
 import fetchMock from "fetch-mock";
+import { runInContext } from "vm";
 
 test("ensureExists returns false", () => {
   const result = updateProject.ensureExists(undefined, "test", "test");
@@ -71,6 +72,14 @@ describe("with environmental variables", () => {
 
 describe("with Octokit setup", () => {
   const OLD_ENV = process.env;
+  const INPUTS = {
+    INPUT_CONTENT_ID: "1",
+    INPUT_FIELD: "testField",
+    INPUT_VALUE: "testValue",
+    INPUT_PROJECT_NUMBER: "1",
+    INPUT_OWNER: "github",
+    INPUT_TOKEN: "testToken",
+  };
   let mock: typeof fetchMock;
 
   const mockGraphQL = (
@@ -99,7 +108,10 @@ describe("with Octokit setup", () => {
 
   const mockContentMetadata = (
     title: String,
-    item: { project: { number: number; owner: { login: string } } }
+    item: {
+      field?: { value?: string };
+      project: { number: number; owner: { login: string } };
+    }
   ) => {
     const data = {
       data: {
@@ -134,7 +146,8 @@ describe("with Octokit setup", () => {
   };
 
   beforeEach(() => {
-    process.env = { ...OLD_ENV, ...{ INPUT_TOKEN: "test" } };
+    jest.resetModules();
+    process.env = { ...OLD_ENV, ...INPUTS };
     fetchMock.config.sendAsJson = true;
     mock = fetchMock.sandbox();
     let options = { request: { fetch: mock } };
@@ -257,7 +270,29 @@ describe("with Octokit setup", () => {
     expect(mock.done()).toBe(true);
   });
 
-  test("updateField", async () => {
+  test("fetchProjectMetadata returns empty object if project is not found", async () => {
+    const data = {
+      data: {
+        organization: {
+          projectV2: null,
+        },
+      },
+    };
+
+    mockGraphQL(data, "missingProjectMetadata", "projectV2");
+
+    const missingValue = await updateProject.fetchProjectMetadata(
+      "github",
+      1,
+      "testField",
+      "missingValue",
+      "update"
+    );
+    expect(missingValue).toEqual({});
+    expect(mock.done()).toBe(true);
+  });
+
+  test("updateField with single_select", async () => {
     const item = { project: { number: 1, owner: { login: "github" } } };
     mockContentMetadata("test", item);
 
@@ -296,6 +331,115 @@ describe("with Octokit setup", () => {
       "new value"
     );
     expect(result).toEqual(data.data);
+    expect(mock.done()).toBe(true);
+  });
+
+  test("fetchProjectMetadata returns empty object if project is not found", async () => {
+    const data = {
+      data: {
+        organization: {
+          projectV2: null,
+        },
+      },
+    };
+
+    mockGraphQL(data, "missingProjectMetadata", "projectV2");
+
+    const missingValue = await updateProject.fetchProjectMetadata(
+      "github",
+      1,
+      "testField",
+      "missingValue",
+      "update"
+    );
+    expect(missingValue).toEqual({});
+    expect(mock.done()).toBe(true);
+  });
+
+  test("updateField with text", async () => {
+    const item = { project: { number: 1, owner: { login: "github" } } };
+    mockContentMetadata("test", item);
+
+    const field = {
+      id: 1,
+      name: "testField",
+      dataType: "text",
+      value: "testValue",
+    };
+    mockProjectMetadata(1, field);
+
+    const data = { data: { projectV2Item: { id: 1 } } };
+    mockGraphQL(data, "updateField", "updateProjectV2ItemFieldValue");
+
+    const projectMetadata = await updateProject.fetchProjectMetadata(
+      "github",
+      1,
+      "testField",
+      "testValue",
+      "update"
+    );
+    const contentMetadata = await updateProject.fetchContentMetadata(
+      "1",
+      "test",
+      1,
+      "github"
+    );
+    const result = await updateProject.updateField(
+      projectMetadata,
+      contentMetadata,
+      "new value"
+    );
+    expect(result).toEqual(data.data);
+    expect(mock.done()).toBe(true);
+  });
+
+  test("run updates a field", async () => {
+    const item = { project: { number: 1, owner: { login: "github" } } };
+    mockContentMetadata("testField", item);
+
+    const field = {
+      id: 1,
+      name: "testField",
+      dataType: "single_select",
+      options: [
+        {
+          id: 1,
+          name: "testValue",
+        },
+      ],
+    };
+    mockProjectMetadata(1, field);
+
+    const data = { data: { projectV2Item: { id: 1 } } };
+    mockGraphQL(data, "updateField", "updateProjectV2ItemFieldValue");
+
+    await updateProject.run();
+    expect(mock.done()).toBe(true);
+  });
+
+  test("run reads a field", async () => {
+    process.env = { ...OLD_ENV, ...INPUTS, ...{ INPUT_OPERATION: "read" } };
+
+    const item = {
+      field: { value: "testValue" },
+      project: { number: 1, owner: { login: "github" } },
+    };
+    mockContentMetadata("testField", item);
+
+    const field = {
+      id: 1,
+      name: "testField",
+      dataType: "single_select",
+      options: [
+        {
+          id: 1,
+          name: "testValue",
+        },
+      ],
+    };
+    mockProjectMetadata(1, field);
+
+    await updateProject.run();
     expect(mock.done()).toBe(true);
   });
 });

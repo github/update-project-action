@@ -85,6 +85,7 @@ exports.fetchContentMetadata = fetchContentMetadata;
  * @returns {Promise<GraphQlQueryResponseData>} - The project metadata
  */
 function fetchProjectMetadata(owner, projectNumber, fieldName, value, operation) {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         const result = yield octokit.graphql(`
     query ($organization: String!, $projectNumber: Int!) {
@@ -111,7 +112,7 @@ function fetchProjectMetadata(owner, projectNumber, fieldName, value, operation)
     }
     `, { organization: owner, projectNumber });
         // Ensure project was found
-        if (!ensureExists(result.organization.projectV2.id, "project", `Number ${projectNumber}, Owner ${owner}`)) {
+        if (!ensureExists((_a = result.organization.projectV2) === null || _a === void 0 ? void 0 : _a.id, "project", `Number ${projectNumber}, Owner ${owner}`)) {
             return {};
         }
         const field = result.organization.projectV2.fields.nodes.find((f) => f.name === fieldName);
@@ -119,7 +120,7 @@ function fetchProjectMetadata(owner, projectNumber, fieldName, value, operation)
         if (!ensureExists(field, "Field", `Name ${fieldName}`)) {
             return {};
         }
-        const option = field.options.find((o) => o.name === value);
+        const option = (_b = field.options) === null || _b === void 0 ? void 0 : _b.find((o) => o.name === value);
         // Ensure option was found, if field is single select
         if (field.dataType === "single_select" && operation === "update") {
             if (!ensureExists(option, "Option", `Value ${value}`)) {
@@ -250,13 +251,12 @@ exports.getInputs = getInputs;
  * @param options - Octokit options
  */
 function setupOctokit(options) {
-    const token = (0, core_1.getInput)("token");
+    const token = (0, core_1.getInput)("token", { required: true });
     octokit = (0, github_1.getOctokit)(token, options);
 }
 exports.setupOctokit = setupOctokit;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        setupOctokit();
         const inputs = getInputs();
         if (Object.entries(inputs).length === 0)
             return;
