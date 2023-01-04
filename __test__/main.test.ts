@@ -82,6 +82,13 @@ describe("with Octokit setup", () => {
   };
   let mock: typeof fetchMock;
 
+  /**
+   * Mocks a GraphQL request
+   * 
+   * @param data a JSON object to return from the mock
+   * @param name a unique string identifier for the mock
+   * @param body a string to match against the request body since all GraphQL calls go to the same endpoint
+   */
   const mockGraphQL = (
     data: { [key: string]: any },
     name: string,
@@ -106,6 +113,12 @@ describe("with Octokit setup", () => {
     );
   };
 
+  /**
+   * Mocks a ContentMetadata GraphQL call
+   *  
+   * @param title The title of the content
+   * @param item Object with the content metadata
+   */
   const mockContentMetadata = (
     title: String,
     item: {
@@ -126,6 +139,12 @@ describe("with Octokit setup", () => {
     mockGraphQL(data, "contentMetadata", "projectItems");
   };
 
+  /**
+   * Mocks a projectMetadata GraphQL call
+   * 
+   * @param projectId the numeric project number
+   * @param field Field metadata object
+   */
   const mockProjectMetadata = (
     projectId: number,
     field: { [key: string]: any }

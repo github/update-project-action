@@ -295,6 +295,9 @@ export function setupOctokit(options?: { [key: string]: any }): void {
   octokit = getOctokit(token, options);
 }
 
+/**
+ * The main event: Updates the selected field with the given value
+ */
 export async function run(): Promise<void> {
   const inputs = getInputs();
   if (Object.entries(inputs).length === 0) return;
