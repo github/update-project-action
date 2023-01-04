@@ -32,7 +32,7 @@ jobs:
         uses: github/update-project-action@v2
         with:
           github_token: ${{ secrets.STATUS_UPDATE_TOKEN }}
-          organizatin: github
+          organization: github
           project_number: 1234
           operation: read
           content_id: ${{ github.event.client_payload.command.resource.id }}
