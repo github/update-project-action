@@ -184,7 +184,6 @@ function updateField(projectMetadata, contentMetadata, value) {
     return __awaiter(this, void 0, void 0, function* () {
         let valueType;
         let valueToSet;
-        //TODO test this behavior
         if (projectMetadata.field.fieldType === "single_select") {
             valueToSet = projectMetadata.field.optionId;
             valueType = "singleSelectOptionId";
@@ -255,6 +254,9 @@ function setupOctokit(options) {
     octokit = (0, github_1.getOctokit)(token, options);
 }
 exports.setupOctokit = setupOctokit;
+/**
+ * The main event: Updates the selected field with the given value
+ */
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const inputs = getInputs();

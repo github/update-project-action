@@ -213,7 +213,6 @@ export async function updateField(
   let valueType: string;
   let valueToSet: string;
 
-  //TODO test this behavior
   if (projectMetadata.field.fieldType === "single_select") {
     valueToSet = projectMetadata.field.optionId;
     valueType = "singleSelectOptionId";
