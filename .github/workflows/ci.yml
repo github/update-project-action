@@ -17,6 +17,9 @@ jobs:
         with:
           node-version: 16
           cache: 'npm'
+      
+      - name: bootstrap
+        run: script/bootstrap
 
       - name: test 
         run: script/cibuild
