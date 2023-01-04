@@ -263,6 +263,7 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         FIELD: ${{ inputs.field }}
+        FIELD_TYPE: ${{ steps.parse_project_fields_metadata.outputs.field_type }}
         PROJECT_ID: ${{ steps.parse_project_fields_metadata.outputs.project_id }}
         ITEM_ID: ${{ steps.parse_content_metadata.outputs.item_id }}
         FIELD_ID: ${{ steps.parse_project_fields_metadata.outputs.field_id }}
@@ -289,7 +290,16 @@ runs:
       shell: bash
       run: |
         # Update project
-        gh api graphql -f query="$QUERY" -F project="$PROJECT_ID" -F item="$ITEM_ID" -F field="$FIELD_ID" -F value="$VALUE_TO_SET"
+        if [ "$FIELD_TYPE" = "single_select" ]; then
+          # From https://cli.github.com/manual/gh_api:
+          # > The -F/--field flag has magic type conversion based on the format of the value:
+          # >   literal values "true", "false", "null", and integer numbers get converted to appropriate JSON types;
+          # Single select option ids are hexadecimal values, but if they are all digits, gh cli coerces them to integers
+          # Reading a value from stdin bypasses the conversion:
+          echo -n $VALUE_TO_SET | gh api graphql -f query="$QUERY" -F project="$PROJECT_ID" -F item="$ITEM_ID" -F field="$FIELD_ID" -F value="@-"
+        else
+          gh api graphql -f query="$QUERY" -F project="$PROJECT_ID" -F item="$ITEM_ID" -F field="$FIELD_ID" -F value="$VALUE_TO_SET"
+        fi
 
         echo ""
         echo "Updated field '$FIELD' on '$ITEM_TITLE' to '$VALUE'. Happy reporting! 📈"
