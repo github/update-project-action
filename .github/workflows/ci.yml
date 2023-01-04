@@ -6,12 +6,15 @@ on:
     branches: [main]
 
 jobs:
-  lint:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
       - name: checkout
         uses: actions/checkout@v2
+
+      - name: test 
+        run: script/cibuild
 
       - name: lint
         run: script/lint
