@@ -6,12 +6,23 @@ on:
     branches: [main]
 
 jobs:
-  lint:
+  ci:
     runs-on: ubuntu-latest
 
     steps:
       - name: checkout
         uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+      
+      - name: bootstrap
+        run: script/bootstrap
+
+      - name: test 
+        run: script/cibuild
 
       - name: lint
         run: script/lint
