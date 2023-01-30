@@ -77,7 +77,7 @@ describe("with Octokit setup", () => {
     INPUT_VALUE: "testValue",
     INPUT_PROJECT_NUMBER: "1",
     INPUT_OWNER: "github",
-    INPUT_TOKEN: "testToken",
+    INPUT_GITHUB_TOKEN: "testToken",
   };
   let mock: typeof fetchMock;
 

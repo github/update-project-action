@@ -290,7 +290,7 @@ export function getInputs(): { [key: string]: any } {
  * @param options - Octokit options
  */
 export function setupOctokit(options?: { [key: string]: any }): void {
-  const token = getInput("token", { required: true });
+  const token = getInput("github_token", { required: true });
   octokit = getOctokit(token, options);
 }
 
