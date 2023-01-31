@@ -1,0 +1,32 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - src/**
+      - package-lock.json
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+      
+      - name: script/bootstrap
+        run: script/bootstrap
+
+      - name: script/cibuild
+        run: script/cibuild
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@000e3c600203cb255d83817abb762ece92981dc9
+        with:
+          commit-message: Update build
+          title: Update build
