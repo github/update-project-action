@@ -250,7 +250,7 @@ exports.getInputs = getInputs;
  * @param options - Octokit options
  */
 function setupOctokit(options) {
-    const token = (0, core_1.getInput)("token", { required: true });
+    const token = (0, core_1.getInput)("github_token", { required: true });
     octokit = (0, github_1.getOctokit)(token, options);
 }
 exports.setupOctokit = setupOctokit;
