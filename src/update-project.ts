@@ -274,7 +274,7 @@ export function getInputs(): { [key: string]: any } {
     contentId: getInput("content_id", { required: true }),
     fieldName: getInput("field", { required: true }),
     projectNumber: parseInt(getInput("project_number", { required: true })),
-    owner: getInput("owner", { required: true }),
+    owner: getInput("organization", { required: true }),
     value: getInput("value", { required: true }),
     operation,
   };

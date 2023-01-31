@@ -236,7 +236,7 @@ function getInputs() {
         contentId: (0, core_1.getInput)("content_id", { required: true }),
         fieldName: (0, core_1.getInput)("field", { required: true }),
         projectNumber: parseInt((0, core_1.getInput)("project_number", { required: true })),
-        owner: (0, core_1.getInput)("owner", { required: true }),
+        owner: (0, core_1.getInput)("organization", { required: true }),
         value: (0, core_1.getInput)("value", { required: true }),
         operation,
     };

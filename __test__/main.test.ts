@@ -34,7 +34,7 @@ describe("with environmental variables", () => {
     INPUT_FIELD: "test",
     INPUT_VALUE: "test",
     INPUT_PROJECT_NUMBER: "1",
-    INPUT_OWNER: "github",
+    INPUT_ORGANIZATION: "github",
   };
 
   beforeEach(() => {
@@ -76,7 +76,7 @@ describe("with Octokit setup", () => {
     INPUT_FIELD: "testField",
     INPUT_VALUE: "testValue",
     INPUT_PROJECT_NUMBER: "1",
-    INPUT_OWNER: "github",
+    INPUT_ORGANIZATION: "github",
     INPUT_GITHUB_TOKEN: "testToken",
   };
   let mock: typeof fetchMock;
