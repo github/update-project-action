@@ -25,6 +25,9 @@ jobs:
       - name: script/cibuild
         run: script/cibuild
 
+      - name: Update README
+        run: script/update-readme
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@000e3c600203cb255d83817abb762ece92981dc9
         with:
