@@ -237,7 +237,7 @@ function getInputs() {
         fieldName: (0, core_1.getInput)("field", { required: true }),
         projectNumber: parseInt((0, core_1.getInput)("project_number", { required: true })),
         owner: (0, core_1.getInput)("organization", { required: true }),
-        value: (0, core_1.getInput)("value", { required: true }),
+        value: (0, core_1.getInput)("value", { required: operation === "update" }),
         operation,
     };
     (0, core_1.info)(`Inputs: ${JSON.stringify(inputs)}`);
@@ -268,6 +268,7 @@ function run() {
         const projectMetadata = yield fetchProjectMetadata(inputs.owner, inputs.projectNumber, inputs.fieldName, inputs.value, inputs.operation);
         if (Object.entries(projectMetadata).length === 0)
             return;
+        (0, core_1.setOutput)("field_read_value", contentMetadata.field.value);
         if (inputs.operation === "update") {
             yield updateField(projectMetadata, contentMetadata, inputs.value);
             (0, core_1.setOutput)("field_updated_value", inputs.value);

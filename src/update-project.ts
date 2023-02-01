@@ -275,7 +275,7 @@ export function getInputs(): { [key: string]: any } {
     fieldName: getInput("field", { required: true }),
     projectNumber: parseInt(getInput("project_number", { required: true })),
     owner: getInput("organization", { required: true }),
-    value: getInput("value", { required: true }),
+    value: getInput("value", { required: operation === "update" }),
     operation,
   };
 
@@ -318,6 +318,7 @@ export async function run(): Promise<void> {
   );
   if (Object.entries(projectMetadata).length === 0) return;
 
+  setOutput("field_read_value", contentMetadata.field.value);
   if (inputs.operation === "update") {
     await updateField(projectMetadata, contentMetadata, inputs.value);
     setOutput("field_updated_value", inputs.value);

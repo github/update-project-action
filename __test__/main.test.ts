@@ -412,7 +412,10 @@ describe("with Octokit setup", () => {
   });
 
   test("run updates a field", async () => {
-    const item = { project: { number: 1, owner: { login: "github" } } };
+    const item = {
+      field: { value: "testValue" },
+      project: { number: 1, owner: { login: "github" } },
+    };
     mockContentMetadata("testField", item);
 
     const field = {
