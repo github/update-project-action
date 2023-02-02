@@ -237,7 +237,7 @@ function getInputs() {
         fieldName: (0, core_1.getInput)("field", { required: true }),
         projectNumber: parseInt((0, core_1.getInput)("project_number", { required: true })),
         owner: (0, core_1.getInput)("organization", { required: true }),
-        value: (0, core_1.getInput)("value", { required: true }),
+        value: (0, core_1.getInput)("value", { required: operation === "update" }),
         operation,
     };
     (0, core_1.info)(`Inputs: ${JSON.stringify(inputs)}`);
@@ -258,6 +258,7 @@ exports.setupOctokit = setupOctokit;
  * The main event: Updates the selected field with the given value
  */
 function run() {
+    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
         const inputs = getInputs();
         if (Object.entries(inputs).length === 0)
@@ -268,13 +269,14 @@ function run() {
         const projectMetadata = yield fetchProjectMetadata(inputs.owner, inputs.projectNumber, inputs.fieldName, inputs.value, inputs.operation);
         if (Object.entries(projectMetadata).length === 0)
             return;
+        (0, core_1.setOutput)("field_read_value", (_a = contentMetadata.field) === null || _a === void 0 ? void 0 : _a.value);
         if (inputs.operation === "update") {
             yield updateField(projectMetadata, contentMetadata, inputs.value);
             (0, core_1.setOutput)("field_updated_value", inputs.value);
             (0, core_1.info)(`Updated field ${inputs.fieldName} on ${contentMetadata.title} to ${inputs.value}`);
         }
         else {
-            (0, core_1.setOutput)("field_updated_value", contentMetadata.field.value);
+            (0, core_1.setOutput)("field_updated_value", (_b = contentMetadata.field) === null || _b === void 0 ? void 0 : _b.value);
         }
     });
 }
