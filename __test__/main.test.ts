@@ -411,7 +411,7 @@ describe("with Octokit setup", () => {
     expect(mock.done()).toBe(true);
   });
 
-  test("run updates a field", async () => {
+  test("run updates a field that was not empty", async () => {
     const item = {
       field: { value: "testValue" },
       project: { number: 1, owner: { login: "github" } },
@@ -438,11 +438,62 @@ describe("with Octokit setup", () => {
     expect(mock.done()).toBe(true);
   });
 
-  test("run reads a field", async () => {
+  test("run updates a field that was empty", async () => {
+    const item = {
+      project: { number: 1, owner: { login: "github" } },
+    };
+    mockContentMetadata("testField", item);
+
+    const field = {
+      id: 1,
+      name: "testField",
+      dataType: "single_select",
+      options: [
+        {
+          id: 1,
+          name: "testValue",
+        },
+      ],
+    };
+    mockProjectMetadata(1, field);
+
+    const data = { data: { projectV2Item: { id: 1 } } };
+    mockGraphQL(data, "updateField", "updateProjectV2ItemFieldValue");
+
+    await updateProject.run();
+    expect(mock.done()).toBe(true);
+  });
+
+  test("run reads a field that is not empty", async () => {
     process.env = { ...OLD_ENV, ...INPUTS, ...{ INPUT_OPERATION: "read" } };
 
     const item = {
       field: { value: "testValue" },
+      project: { number: 1, owner: { login: "github" } },
+    };
+    mockContentMetadata("testField", item);
+
+    const field = {
+      id: 1,
+      name: "testField",
+      dataType: "single_select",
+      options: [
+        {
+          id: 1,
+          name: "testValue",
+        },
+      ],
+    };
+    mockProjectMetadata(1, field);
+
+    await updateProject.run();
+    expect(mock.done()).toBe(true);
+  });
+
+  test("run reads a field that is empty", async () => {
+    process.env = { ...OLD_ENV, ...INPUTS, ...{ INPUT_OPERATION: "read" } };
+
+    const item = {
       project: { number: 1, owner: { login: "github" } },
     };
     mockContentMetadata("testField", item);
