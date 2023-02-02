@@ -19,8 +19,8 @@ inputs:
     description: The field on the project to set the value of
     required: true
   value:
-    description: The value to set the project field to
-    required: true
+    description: The value to set the project field to. Only required for operation type read
+    required: false
   github_token:
     description: A GitHub Token with access to both the source issue and the destination project (`repo` and `write:org` scopes)
     required: true

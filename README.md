@@ -56,22 +56,23 @@ jobs:
 ### Roadmap
 
 The Action is largely feature complete with regards to its initial goals. Find a bug or have a feature request? [Open an issue](https://github.com/benbalter/update-project-action/issues), or better yet, submit a pull request - contribution welcome!
+
 ### Inputs
 
 * `content_id` - The global ID of the issue or pull request within the project
 * `field` - The field on the project to set the value of
 * `github_token` - A GitHub Token with access to both the source issue and the destination project (`repo` and `write:org` scopes)
+* `operation` - Operation type (update or read)
 * `organization` - The organization that contains the project, defaults to the current repository owner
 * `project_number` - The project number from the project's URL
-* `value` - The value to set the project field to
-* `operation` - Type of the operation (`update` or `read`; default is `update`)
+* `value` - The value to set the project field to. Only required for operation type read
 
 ### Outputs
 
-* `field_read_value` - The value of the field before the update
-* `field_updated_value` - The value of the field after the update (in case of `read` operation equals to `field_read_value`)
 * `field_id` - The global ID of the field
+* `field_read_value` - The value of the field before the update
 * `field_type` - The updated field's ProjectV2FieldType (text, single_select, number, date, or iteration)
+* `field_updated_value` - The value of the field after the update
 * `item_id` - The global ID of the issue or pull request
 * `item_title` - The title of the issue or pull request
 * `option_id` - The global ID of the selected option
@@ -79,4 +80,4 @@ The Action is largely feature complete with regards to its initial goals. Find a
 
 ### V1 vs V2
 
-In June 2022, [GitHub announced a breaking change to the Projects API](https://github.blog/changelog/2022-06-23-the-new-github-issues-june-23rd-update/). As such, the `@v1` tag of this action will cease working on October 1st, 2022.  You can upgrade to the `@v2` tag (by updating the reference in your Workflow file) at any time.
+In June 2022, [GitHub announced a breaking change to the Projects API](https://github.blog/changelog/2022-06-23-the-new-github-issues-june-23rd-update/). As such, the `@v1` tag of this action will ceased working on October 1st, 2022.  You can upgrade to the `@v2` tag (by updating the reference in your Workflow file) at any time.
