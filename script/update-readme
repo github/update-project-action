@@ -15,8 +15,7 @@ readme = File.read(readme_path)
   end
 
   regex = /### #{section}\n(.*?)(?:\n\n|\n?\z)/m
-  old_bullets = readme.match(regex).to_a[1]
-  readme = readme.sub(regex, "### #{section}\n\n#{output.join}")
+  readme = readme.sub(regex, "### #{section}\n\n#{output.join}\n")
 end
 
 File.write(readme_path, readme)
