@@ -318,7 +318,7 @@ export async function run(): Promise<void> {
   );
   if (Object.entries(projectMetadata).length === 0) return;
 
-  setOutput("field_read_value", contentMetadata.field.value);
+  setOutput("field_read_value", contentMetadata.field?.value);
   if (inputs.operation === "update") {
     await updateField(projectMetadata, contentMetadata, inputs.value);
     setOutput("field_updated_value", inputs.value);
@@ -326,6 +326,6 @@ export async function run(): Promise<void> {
       `Updated field ${inputs.fieldName} on ${contentMetadata.title} to ${inputs.value}`
     );
   } else {
-    setOutput("field_updated_value", contentMetadata.field.value);
+    setOutput("field_updated_value", contentMetadata.field?.value);
   }
 }
