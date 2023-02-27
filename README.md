@@ -46,6 +46,7 @@ jobs:
           github_token: ${{ secrets.STATUS_UPDATE_TOKEN }}
           organization: github
           project_number: 1234
+          operation: update
           content_id: ${{ github.event.client_payload.command.resource.id }}
           field: Status
           value: ${{ github.event.client_payload.data.status }}
@@ -65,7 +66,7 @@ The Action is largely feature complete with regards to its initial goals. Find a
 * `operation` - Operation type (update or read)
 * `organization` - The organization that contains the project, defaults to the current repository owner
 * `project_number` - The project number from the project's URL
-* `value` - The value to set the project field to. Only required for operation type read
+* `value` - The value to set the project field to. Only required for operation type update
 
 ### Outputs
 
