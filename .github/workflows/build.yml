@@ -31,7 +31,7 @@ jobs:
         run: script/update-readme
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@000e3c600203cb255d83817abb762ece92981dc9
+        uses: peter-evans/create-pull-request@b8f683bda6e263050e3ef4e75b7b2de5b46f9fc4
         with:
           commit-message: Update build
           title: Update build
