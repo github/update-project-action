@@ -21,6 +21,35 @@ export async function fetchContentMetadata(
 ): Promise<GraphQlQueryResponseData> {
   const result: GraphQlQueryResponseData = await octokit.graphql(
     `
+    fragment ProjectItemFields on ProjectV2Item {
+      id
+      project {
+        number
+        owner {
+          ... on Organization {
+            login
+          }
+          ... on User {
+            login
+          }
+        }
+      }
+      field: fieldValueByName(name: $fieldName) {
+        ... on ProjectV2ItemFieldSingleSelectValue {
+          value: name
+        }
+        ... on ProjectV2ItemFieldNumberValue {
+          value: number
+        }
+        ... on ProjectV2ItemFieldTextValue {
+          value: text
+        }
+        ... on ProjectV2ItemFieldDateValue {
+          value: date
+        }
+      }
+    }
+    
     query result($contentId: ID!, $fieldName: String!) {
       node(id: $contentId) {
         ... on Issue {
@@ -28,32 +57,16 @@ export async function fetchContentMetadata(
           title
           projectItems(first: 100) {
             nodes {
-              id
-              project {
-                number
-                owner {
-                  ... on Organization {
-                    login
-                  }
-                  ... on User {
-                    login
-                  }
-                }
-              }
-              field: fieldValueByName(name: $fieldName) {
-                ... on ProjectV2ItemFieldSingleSelectValue {
-                      value: name
-                }
-                ... on ProjectV2ItemFieldNumberValue {
-                      value: number
-                }
-                ... on ProjectV2ItemFieldTextValue {
-                      value: text
-                }
-                ... on ProjectV2ItemFieldDateValue {
-                      value: date
-                }
-              }
+              ...ProjectItemFields
+            }
+          }
+        }
+        ... on PullRequest {
+          id
+          title
+          projectItems(first: 100) {
+            nodes {
+              ...ProjectItemFields
             }
           }
         }
