@@ -29,7 +29,7 @@ jobs:
     steps:
       - name: Read status
         id: read_status
-        uses: github/update-project-action@v2
+        uses: github/update-project-action@v3
         with:
           github_token: ${{ secrets.STATUS_UPDATE_TOKEN }}
           organization: github
@@ -41,7 +41,7 @@ jobs:
           echo "Current status value: ${{ steps.read_status.outputs.field_read_value }}"
       - name: Update status
         id: update_status
-        uses: github/update-project-action@v2
+        uses: github/update-project-action@v3
         with:
           github_token: ${{ secrets.STATUS_UPDATE_TOKEN }}
           organization: github
