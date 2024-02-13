@@ -25,6 +25,35 @@ let octokit;
 function fetchContentMetadata(contentId, fieldName, projectNumber, owner) {
     return __awaiter(this, void 0, void 0, function* () {
         const result = yield octokit.graphql(`
+    fragment ProjectItemFields on ProjectV2Item {
+      id
+      project {
+        number
+        owner {
+          ... on Organization {
+            login
+          }
+          ... on User {
+            login
+          }
+        }
+      }
+      field: fieldValueByName(name: $fieldName) {
+        ... on ProjectV2ItemFieldSingleSelectValue {
+          value: name
+        }
+        ... on ProjectV2ItemFieldNumberValue {
+          value: number
+        }
+        ... on ProjectV2ItemFieldTextValue {
+          value: text
+        }
+        ... on ProjectV2ItemFieldDateValue {
+          value: date
+        }
+      }
+    }
+    
     query result($contentId: ID!, $fieldName: String!) {
       node(id: $contentId) {
         ... on Issue {
@@ -32,32 +61,16 @@ function fetchContentMetadata(contentId, fieldName, projectNumber, owner) {
           title
           projectItems(first: 100) {
             nodes {
-              id
-              project {
-                number
-                owner {
-                  ... on Organization {
-                    login
-                  }
-                  ... on User {
-                    login
-                  }
-                }
-              }
-              field: fieldValueByName(name: $fieldName) {
-                ... on ProjectV2ItemFieldSingleSelectValue {
-                      value: name
-                }
-                ... on ProjectV2ItemFieldNumberValue {
-                      value: number
-                }
-                ... on ProjectV2ItemFieldTextValue {
-                      value: text
-                }
-                ... on ProjectV2ItemFieldDateValue {
-                      value: date
-                }
-              }
+              ...ProjectItemFields
+            }
+          }
+        }
+        ... on PullRequest {
+          id
+          title
+          projectItems(first: 100) {
+            nodes {
+              ...ProjectItemFields
             }
           }
         }
