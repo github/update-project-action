@@ -50,5 +50,5 @@ outputs:
     description: "The global ID of the selected option"
     value: ${{ steps.parse_project_metadata.outputs.option_id }}
 runs:
-  using: 'node16'
-  main: 'dist/index.js'
+  using: 'node20'
+  main: 'dist/main.js'
