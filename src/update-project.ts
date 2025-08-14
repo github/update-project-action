@@ -213,6 +213,26 @@ export function valueGraphqlType(fieldType: String): String {
 }
 
 /**
+ * Converts a string value to the appropriate type for the field
+ * @param {string} value - the string value from the action input
+ * @param {string} fieldType - the field type from the project metadata
+ * @returns {string | number} - the converted value
+ */
+export function convertValueToFieldType(
+  value: string,
+  fieldType: string
+): string | number {
+  if (fieldType === "number") {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) {
+      throw new Error(`Invalid number value: ${value}`);
+    }
+    return numValue;
+  }
+  return value;
+}
+
+/**
  * Updates the field value for the content item
  * @param {GraphQlQueryResponseData} projectMetadata - The project metadata returned from fetchProjectMetadata()
  * @param {GraphQlQueryResponseData} contentMetadata - The content metadata returned from fetchContentMetadata()
@@ -224,13 +244,16 @@ export async function updateField(
   value: string
 ): Promise<GraphQlQueryResponseData> {
   let valueType: string;
-  let valueToSet: string;
+  let valueToSet: string | number;
 
   if (projectMetadata.field.fieldType === "single_select") {
     valueToSet = projectMetadata.field.optionId;
     valueType = "singleSelectOptionId";
   } else {
-    valueToSet = value;
+    valueToSet = convertValueToFieldType(
+      value,
+      projectMetadata.field.fieldType
+    );
     valueType = projectMetadata.field.fieldType;
   }
 

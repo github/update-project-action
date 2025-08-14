@@ -9702,7 +9702,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.run = exports.setupOctokit = exports.getInputs = exports.updateField = exports.valueGraphqlType = exports.ensureExists = exports.fetchProjectMetadata = exports.fetchContentMetadata = void 0;
+exports.run = exports.setupOctokit = exports.getInputs = exports.updateField = exports.convertValueToFieldType = exports.valueGraphqlType = exports.ensureExists = exports.fetchProjectMetadata = exports.fetchContentMetadata = void 0;
 const core_1 = __nccwpck_require__(2186);
 const github_1 = __nccwpck_require__(5438);
 let octokit;
@@ -9881,6 +9881,23 @@ function valueGraphqlType(fieldType) {
 }
 exports.valueGraphqlType = valueGraphqlType;
 /**
+ * Converts a string value to the appropriate type for the field
+ * @param {string} value - the string value from the action input
+ * @param {string} fieldType - the field type from the project metadata
+ * @returns {string | number} - the converted value
+ */
+function convertValueToFieldType(value, fieldType) {
+    if (fieldType === "number") {
+        const numValue = parseFloat(value);
+        if (isNaN(numValue)) {
+            throw new Error(`Invalid number value: ${value}`);
+        }
+        return numValue;
+    }
+    return value;
+}
+exports.convertValueToFieldType = convertValueToFieldType;
+/**
  * Updates the field value for the content item
  * @param {GraphQlQueryResponseData} projectMetadata - The project metadata returned from fetchProjectMetadata()
  * @param {GraphQlQueryResponseData} contentMetadata - The content metadata returned from fetchContentMetadata()
@@ -9895,7 +9912,7 @@ function updateField(projectMetadata, contentMetadata, value) {
             valueType = "singleSelectOptionId";
         }
         else {
-            valueToSet = value;
+            valueToSet = convertValueToFieldType(value, projectMetadata.field.fieldType);
             valueType = projectMetadata.field.fieldType;
         }
         const result = yield octokit.graphql(`
