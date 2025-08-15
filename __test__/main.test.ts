@@ -27,6 +27,37 @@ test("valueGraphqlType returns String for text", () => {
   expect(result).toBe("String");
 });
 
+test("convertValueToFieldType converts string to number for number field", () => {
+  const result = updateProject.convertValueToFieldType("42", "number");
+  expect(result).toBe(42);
+});
+
+test("convertValueToFieldType converts string to float for number field", () => {
+  const result = updateProject.convertValueToFieldType("3.14", "number");
+  expect(result).toBe(3.14);
+});
+
+test("convertValueToFieldType converts zero string to number for number field", () => {
+  const result = updateProject.convertValueToFieldType("0", "number");
+  expect(result).toBe(0);
+});
+
+test("convertValueToFieldType throws error for invalid number", () => {
+  expect(() => {
+    updateProject.convertValueToFieldType("not-a-number", "number");
+  }).toThrow("Invalid number value: not-a-number");
+});
+
+test("convertValueToFieldType returns string for text field", () => {
+  const result = updateProject.convertValueToFieldType("hello", "text");
+  expect(result).toBe("hello");
+});
+
+test("convertValueToFieldType returns string for date field", () => {
+  const result = updateProject.convertValueToFieldType("2023-01-01", "date");
+  expect(result).toBe("2023-01-01");
+});
+
 describe("with environmental variables", () => {
   const OLD_ENV = process.env;
   const INPUTS = {
@@ -406,6 +437,78 @@ describe("with Octokit setup", () => {
       projectMetadata,
       contentMetadata,
       "new value"
+    );
+    expect(result).toEqual(data.data);
+    expect(mock.done()).toBe(true);
+  });
+
+  test("updateField with number", async () => {
+    const item = { project: { number: 1, owner: { login: "github" } } };
+    mockContentMetadata("test", item);
+
+    const field = {
+      id: 1,
+      name: "testField",
+      dataType: "number",
+    };
+    mockProjectMetadata(1, field);
+
+    const data = { data: { projectV2Item: { id: 1 } } };
+    mockGraphQL(data, "updateField", "updateProjectV2ItemFieldValue");
+
+    const projectMetadata = await updateProject.fetchProjectMetadata(
+      "github",
+      1,
+      "testField",
+      "42",
+      "update"
+    );
+    const contentMetadata = await updateProject.fetchContentMetadata(
+      "1",
+      "test",
+      1,
+      "github"
+    );
+    const result = await updateProject.updateField(
+      projectMetadata,
+      contentMetadata,
+      "42"
+    );
+    expect(result).toEqual(data.data);
+    expect(mock.done()).toBe(true);
+  });
+
+  test("updateField with number field value zero", async () => {
+    const item = { project: { number: 1, owner: { login: "github" } } };
+    mockContentMetadata("test", item);
+
+    const field = {
+      id: 1,
+      name: "testField",
+      dataType: "number",
+    };
+    mockProjectMetadata(1, field);
+
+    const data = { data: { projectV2Item: { id: 1 } } };
+    mockGraphQL(data, "updateField", "updateProjectV2ItemFieldValue");
+
+    const projectMetadata = await updateProject.fetchProjectMetadata(
+      "github",
+      1,
+      "testField",
+      "0",
+      "update"
+    );
+    const contentMetadata = await updateProject.fetchContentMetadata(
+      "1",
+      "test",
+      1,
+      "github"
+    );
+    const result = await updateProject.updateField(
+      projectMetadata,
+      contentMetadata,
+      "0"
     );
     expect(result).toEqual(data.data);
     expect(mock.done()).toBe(true);
