@@ -222,7 +222,7 @@ export function convertValueToFieldType(
   value: string,
   fieldType: string
 ): string | number {
-  if (fieldType === "number") {
+  if (fieldType === "NUMBER") {
     const numValue = parseFloat(value);
     if (isNaN(numValue)) {
       throw new Error(`Invalid number value: ${value}`);
