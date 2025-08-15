@@ -53,6 +53,33 @@ jobs:
 
 *Note: The above step can be repeated multiple times in a given job to update multiple fields on the same or different projects.* 
 
+#### Example: Update project status when issue is assigned
+
+When using the `issues` trigger with `assigned` event, you may want to automatically add the issue to a project and set its status:
+
+```yml
+name: Update assigned issues in project
+
+on:
+  issues:
+    types: [assigned]
+
+jobs:
+  update-project-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update status
+        uses: github/update-project-action@v2
+        with:
+          github_token: ${{ secrets.ACTIONS_TOKEN }}
+          organization: webrecorder
+          project_number: 9
+          content_id: ${{ github.event.issue.node_id }}
+          field: Status
+          value: Todo
+          auto_add: true  # Automatically add issue to project if not already in it
+```
+
 ### Roadmap
 
 The Action is largely feature complete with regards to its initial goals. Find a bug or have a feature request? [Open an issue](https://github.com/benbalter/update-project-action/issues), or better yet, submit a pull request - contribution welcome!
@@ -66,6 +93,7 @@ The Action is largely feature complete with regards to its initial goals. Find a
 * `organization` - The organization that contains the project, defaults to the current repository owner
 * `project_number` - The project number from the project's URL
 * `value` - The value to set the project field to. Only required for operation type read
+* `auto_add` - Automatically add the issue or pull request to the project if it's not already in it (default: false)
 
 ### Outputs
 

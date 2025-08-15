@@ -86,8 +86,21 @@ export async function fetchContentMetadata(
   );
   const itemTitle = result.node.title;
 
-  if (!ensureExists(item, "content", `ID ${contentId}`)) {
-    return {};
+  if (!item) {
+    // Check if the node exists but is not in the project
+    if (result.node && result.node.id) {
+      info(
+        `Issue/PR ${contentId} exists but is not in project ${projectNumber} for ${owner}`
+      );
+      return {
+        notInProject: true,
+        nodeId: result.node.id,
+        title: itemTitle,
+      };
+    } else {
+      setFailed(`Item not found with ID ${contentId}`);
+      return {};
+    }
   } else {
     return { ...item, title: itemTitle };
   }
@@ -222,7 +235,7 @@ export function convertValueToFieldType(
   value: string,
   fieldType: string
 ): string | number {
-  if (fieldType === "NUMBER") {
+  if (fieldType === "number") {
     const numValue = parseFloat(value);
     if (isNaN(numValue)) {
       throw new Error(`Invalid number value: ${value}`);
@@ -230,6 +243,40 @@ export function convertValueToFieldType(
     return numValue;
   }
   return value;
+}
+
+/**
+ * Adds an issue or pull request to a project
+ * @param {string} projectId - The global ID of the project
+ * @param {string} contentId - The global ID of the issue or pull request
+ * @returns {Promise<GraphQlQueryResponseData>} - The added project item
+ */
+export async function addProjectItem(
+  projectId: string,
+  contentId: string
+): Promise<GraphQlQueryResponseData> {
+  const result: GraphQlQueryResponseData = await octokit.graphql(
+    `
+    mutation($project: ID!, $contentId: ID!) {
+      addProjectV2ItemById(
+        input: {
+          projectId: $project
+          contentId: $contentId
+        }
+      ) {
+        item {
+          id
+        }
+      }
+    }
+    `,
+    {
+      project: projectId,
+      contentId,
+    }
+  );
+
+  return result;
 }
 
 /**
@@ -312,6 +359,7 @@ export function getInputs(): { [key: string]: any } {
     projectNumber: parseInt(getInput("project_number", { required: true })),
     owner: getInput("organization", { required: true }),
     value: getInput("value", { required: operation === "update" }),
+    autoAdd: getInput("auto_add") === "true",
     operation,
   };
 
@@ -337,12 +385,41 @@ export async function run(): Promise<void> {
   const inputs = getInputs();
   if (Object.entries(inputs).length === 0) return;
 
-  const contentMetadata = await fetchContentMetadata(
+  let contentMetadata = await fetchContentMetadata(
     inputs.contentId,
     inputs.fieldName,
     inputs.projectNumber,
     inputs.owner
   );
+
+  // Check if the item is not in the project but auto_add is enabled
+  if (contentMetadata.notInProject && inputs.autoAdd) {
+    info(
+      `Auto-adding item ${inputs.contentId} to project ${inputs.projectNumber}`
+    );
+
+    // First get the project metadata to get the project ID
+    const projectMetadata = await fetchProjectMetadata(
+      inputs.owner,
+      inputs.projectNumber,
+      inputs.fieldName,
+      inputs.value,
+      inputs.operation
+    );
+    if (Object.entries(projectMetadata).length === 0) return;
+
+    // Add the item to the project
+    await addProjectItem(projectMetadata.projectId, inputs.contentId);
+
+    // Fetch the content metadata again now that it's in the project
+    contentMetadata = await fetchContentMetadata(
+      inputs.contentId,
+      inputs.fieldName,
+      inputs.projectNumber,
+      inputs.owner
+    );
+  }
+
   if (Object.entries(contentMetadata).length === 0) return;
 
   const projectMetadata = await fetchProjectMetadata(
