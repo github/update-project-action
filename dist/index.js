@@ -9770,6 +9770,11 @@ function fetchContentMetadata(contentId, fieldName, projectNumber, owner) {
       }
     }
   `, { contentId, fieldName });
+        // Handle case where node is null (e.g., when PR is closed without merging)
+        if (!result.node) {
+            (0, core_1.setFailed)(`Content not found with ID ${contentId} - it may have been deleted or is not accessible`);
+            return {};
+        }
         const item = result.node.projectItems.nodes.find((node) => {
             return (node.project.number === projectNumber &&
                 node.project.owner.login === owner);
