@@ -235,6 +235,24 @@ describe("with Octokit setup", () => {
     expect(mock.done()).toBe(true);
   });
 
+  test("fetchContentMetadata returns empty object if node is null", async () => {
+    const data = {
+      data: {
+        node: null,
+      },
+    };
+    mockGraphQL(data, "nullContentMetadata", "projectItems");
+
+    const result = await updateProject.fetchContentMetadata(
+      "PR_closed_node_id",
+      "test",
+      1,
+      "github"
+    );
+    expect(result).toEqual({});
+    expect(mock.done()).toBe(true);
+  });
+
   test("fetchProjectMetadata fetches project metadata", async () => {
     const expected = {
       projectId: 1,
