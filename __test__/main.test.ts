@@ -28,23 +28,23 @@ test("valueGraphqlType returns String for text", () => {
 });
 
 test("convertValueToFieldType converts string to number for number field", () => {
-  const result = updateProject.convertValueToFieldType("42", "number");
+  const result = updateProject.convertValueToFieldType("42", "NUMBER");
   expect(result).toBe(42);
 });
 
 test("convertValueToFieldType converts string to float for number field", () => {
-  const result = updateProject.convertValueToFieldType("3.14", "number");
+  const result = updateProject.convertValueToFieldType("3.14", "NUMBER");
   expect(result).toBe(3.14);
 });
 
 test("convertValueToFieldType converts zero string to number for number field", () => {
-  const result = updateProject.convertValueToFieldType("0", "number");
+  const result = updateProject.convertValueToFieldType("0", "NUMBER");
   expect(result).toBe(0);
 });
 
 test("convertValueToFieldType throws error for invalid number", () => {
   expect(() => {
-    updateProject.convertValueToFieldType("not-a-number", "number");
+    updateProject.convertValueToFieldType("not-a-number", "NUMBER");
   }).toThrow("Invalid number value: not-a-number");
 });
 
