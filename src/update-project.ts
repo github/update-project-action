@@ -290,6 +290,42 @@ export async function updateField(
 }
 
 /**
+ * Clears the field value for the content item
+ * @param {GraphQlQueryResponseData} projectMetadata - The project metadata returned from fetchProjectMetadata()
+ * @param {GraphQlQueryResponseData} contentMetadata - The content metadata returned from fetchContentMetadata()
+ * @return {Promise<GraphQlQueryResponseData>} - The updated content metadata
+ */
+export async function clearField(
+  projectMetadata: GraphQlQueryResponseData,
+  contentMetadata: GraphQlQueryResponseData
+): Promise<GraphQlQueryResponseData> {
+  const result: GraphQlQueryResponseData = await octokit.graphql(
+    `
+    mutation($project: ID!, $item: ID!, $field: ID!) {
+      clearProjectV2ItemFieldValue(
+        input: {
+          projectId: $project
+          itemId: $item
+          fieldId: $field
+        }
+      ) {
+        projectV2Item {
+          id
+        }
+      }
+    }
+    `,
+    {
+      project: projectMetadata.projectId,
+      item: contentMetadata.id,
+      field: projectMetadata.field.fieldId,
+    }
+  );
+
+  return result;
+}
+
+/**
  * Returns the validated and normalized inputs for the action
  *
  * @returns {object} - The inputs for the action
@@ -298,9 +334,9 @@ export function getInputs(): { [key: string]: any } {
   let operation = getInput("operation");
   if (operation === "") operation = "update";
 
-  if (!["read", "update"].includes(operation)) {
+  if (!["read", "update", "clear"].includes(operation)) {
     setFailed(
-      `Invalid value passed for the 'operation' parameter (passed: ${operation}, allowed: read, update)`
+      `Invalid value passed for the 'operation' parameter (passed: ${operation}, allowed: read, update, clear)`
     );
 
     return {};
@@ -361,6 +397,10 @@ export async function run(): Promise<void> {
     info(
       `Updated field ${inputs.fieldName} on ${contentMetadata.title} to ${inputs.value}`
     );
+  } else if (inputs.operation === "clear") {
+    await clearField(projectMetadata, contentMetadata);
+    setOutput("field_updated_value", null);
+    info(`Cleared field ${inputs.fieldName} on ${contentMetadata.title}`);
   } else {
     setOutput("field_updated_value", contentMetadata.field?.value);
   }
