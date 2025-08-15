@@ -75,7 +75,7 @@ The Action is largely feature complete with regards to its initial goals. Find a
 * `operation` - Operation type (update, read, or clear)
 * `organization` - The organization that contains the project, defaults to the current repository owner
 * `project_number` - The project number from the project's URL
-* `value` - The value to set the project field to. Only required for operation type update
+* `value` - The value to set the project field to. Only required for operation type `update`; not required for `read` or `clear`.
 
 ### Outputs
 
