@@ -21,6 +21,10 @@ inputs:
   value:
     description: The value to set the project field to. Only required for operation type read
     required: false
+  auto_add:
+    description: Automatically add the issue or pull request to the project if it's not already in it
+    required: false
+    default: false
   github_token:
     description: A GitHub Token with access to both the source issue and the destination project (`repo` and `write:org` scopes)
     required: true

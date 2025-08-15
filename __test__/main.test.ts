@@ -617,4 +617,152 @@ describe("with Octokit setup", () => {
     await updateProject.run();
     expect(mock.done()).toBe(true);
   });
+
+  test("fetchContentMetadata returns empty object when issue not in project", async () => {
+    // Mock an issue that exists but has no project items
+    const data = {
+      data: {
+        node: {
+          id: "I_kwDOABCDEF1234567890",
+          title: "Test Issue",
+          projectItems: {
+            nodes: [], // Empty - issue is not in any project
+          },
+        },
+      },
+    };
+    mockGraphQL(data, "contentMetadata", "projectItems");
+
+    const result = await updateProject.fetchContentMetadata(
+      "I_kwDOABCDEF1234567890",
+      "Status",
+      9,
+      "webrecorder"
+    );
+    expect(result).toEqual({
+      notInProject: true,
+      nodeId: "I_kwDOABCDEF1234567890",
+      title: "Test Issue",
+    });
+    expect(mock.done()).toBe(true);
+  });
+
+  test("addProjectItem adds item to project", async () => {
+    const data = {
+      data: {
+        addProjectV2ItemById: {
+          item: {
+            id: "PVTI_lADOABCDEF4",
+          },
+        },
+      },
+    };
+    mockGraphQL(data, "addProjectItem", "addProjectV2ItemById");
+
+    const result = await updateProject.addProjectItem(
+      "PVT_kwDOABCDEF4",
+      "I_kwDOABCDEF1234567890"
+    );
+    expect(result.addProjectV2ItemById.item.id).toBe("PVTI_lADOABCDEF4");
+    expect(mock.done()).toBe(true);
+  });
+
+  test("run with auto_add when issue not in project", async () => {
+    // Set up environment with auto_add enabled
+    process.env = {
+      ...OLD_ENV,
+      ...INPUTS,
+      INPUT_AUTO_ADD: "true",
+      INPUT_CONTENT_ID: "I_kwDOABCDEF1234567890",
+    };
+
+    // Mock 1: Issue exists but not in project (first call to fetchContentMetadata)
+    const issueNotInProjectData = {
+      data: {
+        node: {
+          id: "I_kwDOABCDEF1234567890",
+          title: "Test Issue",
+          projectItems: {
+            nodes: [], // Empty - issue is not in any project
+          },
+        },
+      },
+    };
+    mockGraphQL(
+      issueNotInProjectData,
+      "autoAddContentMetadata1",
+      "projectItems"
+    );
+
+    // Mock 2: Project metadata for getting project ID
+    const field = {
+      id: 1,
+      name: "testField",
+      dataType: "single_select",
+      options: [
+        {
+          id: 1,
+          name: "testValue",
+        },
+      ],
+    };
+    const projectData = {
+      data: {
+        organization: {
+          projectV2: {
+            id: 1,
+            fields: {
+              nodes: [field],
+            },
+          },
+        },
+      },
+    };
+    mockGraphQL(projectData, "autoAddProjectMetadata1", "projectV2");
+
+    // Mock 3: Add item to project
+    const addItemData = {
+      data: {
+        addProjectV2ItemById: {
+          item: {
+            id: "PVTI_lADOABCDEF4",
+          },
+        },
+      },
+    };
+    mockGraphQL(addItemData, "autoAddItem", "addProjectV2ItemById");
+
+    // Mock 4: Issue now in project (second call to fetchContentMetadata)
+    const issueInProjectData = {
+      data: {
+        node: {
+          id: "I_kwDOABCDEF1234567890",
+          title: "Test Issue",
+          projectItems: {
+            nodes: [
+              {
+                id: "PVTI_lADOABCDEF4",
+                project: { number: 1, owner: { login: "github" } },
+              },
+            ],
+          },
+        },
+      },
+    };
+    mockGraphQL(issueInProjectData, "autoAddContentMetadata2", "projectItems");
+
+    // Mock 5: Project metadata again
+    mockGraphQL(projectData, "autoAddProjectMetadata2", "projectV2");
+
+    // Mock 6: Update field
+    const updateData = { data: { projectV2Item: { id: "PVTI_lADOABCDEF4" } } };
+    mockGraphQL(
+      updateData,
+      "autoAddUpdateField",
+      "updateProjectV2ItemFieldValue"
+    );
+
+    await updateProject.run();
+    expect(mock.done()).toBe(true);
+  });
 });
