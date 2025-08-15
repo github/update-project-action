@@ -49,6 +49,16 @@ jobs:
           content_id: ${{ github.event.client_payload.command.resource.id }}
           field: Status
           value: ${{ github.event.client_payload.data.status }}
+      - name: Clear due date
+        id: clear_due_date
+        uses: github/update-project-action@v3
+        with:
+          github_token: ${{ secrets.STATUS_UPDATE_TOKEN }}
+          organization: github
+          project_number: 1234
+          content_id: ${{ github.event.client_payload.command.resource.id }}
+          field: "Due Date"
+          operation: clear
 ```
 
 *Note: The above step can be repeated multiple times in a given job to update multiple fields on the same or different projects.* 
@@ -62,10 +72,10 @@ The Action is largely feature complete with regards to its initial goals. Find a
 * `content_id` - The global ID of the issue or pull request within the project
 * `field` - The field on the project to set the value of
 * `github_token` - A GitHub Token with access to both the source issue and the destination project (`repo` and `write:org` scopes)
-* `operation` - Operation type (update or read)
+* `operation` - Operation type (update, read, or clear)
 * `organization` - The organization that contains the project, defaults to the current repository owner
 * `project_number` - The project number from the project's URL
-* `value` - The value to set the project field to. Only required for operation type read
+* `value` - The value to set the project field to. Only required for operation type `update`; not required for `read` or `clear`.
 
 ### Outputs
 

@@ -10408,7 +10408,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.run = exports.setupOctokit = exports.getInputs = exports.updateField = exports.convertValueToFieldType = exports.valueGraphqlType = exports.ensureExists = exports.fetchProjectMetadata = exports.fetchContentMetadata = void 0;
+exports.run = exports.setupOctokit = exports.getInputs = exports.clearField = exports.updateField = exports.convertValueToFieldType = exports.valueGraphqlType = exports.ensureExists = exports.fetchProjectMetadata = exports.fetchContentMetadata = void 0;
 const core_1 = __nccwpck_require__(2186);
 const github_1 = __nccwpck_require__(5438);
 let octokit;
@@ -10649,6 +10649,37 @@ function updateField(projectMetadata, contentMetadata, value) {
 }
 exports.updateField = updateField;
 /**
+ * Clears the field value for the content item
+ * @param {GraphQlQueryResponseData} projectMetadata - The project metadata returned from fetchProjectMetadata()
+ * @param {GraphQlQueryResponseData} contentMetadata - The content metadata returned from fetchContentMetadata()
+ * @return {Promise<GraphQlQueryResponseData>} - The updated content metadata
+ */
+function clearField(projectMetadata, contentMetadata) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const result = yield octokit.graphql(`
+    mutation($project: ID!, $item: ID!, $field: ID!) {
+      clearProjectV2ItemFieldValue(
+        input: {
+          projectId: $project
+          itemId: $item
+          fieldId: $field
+        }
+      ) {
+        projectV2Item {
+          id
+        }
+      }
+    }
+    `, {
+            project: projectMetadata.projectId,
+            item: contentMetadata.id,
+            field: projectMetadata.field.fieldId,
+        });
+        return result;
+    });
+}
+exports.clearField = clearField;
+/**
  * Returns the validated and normalized inputs for the action
  *
  * @returns {object} - The inputs for the action
@@ -10657,8 +10688,8 @@ function getInputs() {
     let operation = (0, core_1.getInput)("operation");
     if (operation === "")
         operation = "update";
-    if (!["read", "update"].includes(operation)) {
-        (0, core_1.setFailed)(`Invalid value passed for the 'operation' parameter (passed: ${operation}, allowed: read, update)`);
+    if (!["read", "update", "clear"].includes(operation)) {
+        (0, core_1.setFailed)(`Invalid value passed for the 'operation' parameter (passed: ${operation}, allowed: read, update, clear)`);
         return {};
     }
     const inputs = {
@@ -10703,6 +10734,11 @@ function run() {
             yield updateField(projectMetadata, contentMetadata, inputs.value);
             (0, core_1.setOutput)("field_updated_value", inputs.value);
             (0, core_1.info)(`Updated field ${inputs.fieldName} on ${contentMetadata.title} to ${inputs.value}`);
+        }
+        else if (inputs.operation === "clear") {
+            yield clearField(projectMetadata, contentMetadata);
+            (0, core_1.setOutput)("field_updated_value", null);
+            (0, core_1.info)(`Cleared field ${inputs.fieldName} on ${contentMetadata.title}`);
         }
         else {
             (0, core_1.setOutput)("field_updated_value", (_b = contentMetadata.field) === null || _b === void 0 ? void 0 : _b.value);

@@ -9,7 +9,7 @@ inputs:
     description: The project number from the project's URL
     required: true
   operation:
-    description: Operation type (update or read)
+    description: Operation type (update, read, or clear)
     default: update
     required: false
   content_id:

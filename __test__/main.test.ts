@@ -93,6 +93,12 @@ describe("with environmental variables", () => {
     expect(result.operation).toEqual("read");
   });
 
+  test("getInputs accepts clear", () => {
+    process.env = { ...process.env, ...{ INPUT_OPERATION: "clear" } };
+    const result = updateProject.getInputs();
+    expect(result.operation).toEqual("clear");
+  });
+
   test("getInputs doesn't accept other operations", () => {
     process.env = { ...process.env, ...{ INPUT_OPERATION: "foo" } };
     const result = updateProject.getInputs();
@@ -514,6 +520,41 @@ describe("with Octokit setup", () => {
     expect(mock.done()).toBe(true);
   });
 
+  test("clearField clears a field", async () => {
+    const item = { project: { number: 1, owner: { login: "github" } } };
+    mockContentMetadata("test", item);
+
+    const field = {
+      id: 1,
+      name: "testField",
+      dataType: "date",
+    };
+    mockProjectMetadata(1, field);
+
+    const data = { data: { projectV2Item: { id: 1 } } };
+    mockGraphQL(data, "clearField", "clearProjectV2ItemFieldValue");
+
+    const projectMetadata = await updateProject.fetchProjectMetadata(
+      "github",
+      1,
+      "testField",
+      "",
+      "clear"
+    );
+    const contentMetadata = await updateProject.fetchContentMetadata(
+      "1",
+      "test",
+      1,
+      "github"
+    );
+    const result = await updateProject.clearField(
+      projectMetadata,
+      contentMetadata
+    );
+    expect(result).toEqual(data.data);
+    expect(mock.done()).toBe(true);
+  });
+
   test("run updates a field that was not empty", async () => {
     const item = {
       field: { value: "testValue" },
@@ -613,6 +654,29 @@ describe("with Octokit setup", () => {
       ],
     };
     mockProjectMetadata(1, field);
+
+    await updateProject.run();
+    expect(mock.done()).toBe(true);
+  });
+
+  test("run clears a field", async () => {
+    process.env = { ...OLD_ENV, ...INPUTS, ...{ INPUT_OPERATION: "clear" } };
+
+    const item = {
+      field: { value: "2023-01-01" },
+      project: { number: 1, owner: { login: "github" } },
+    };
+    mockContentMetadata("testField", item);
+
+    const field = {
+      id: 1,
+      name: "testField",
+      dataType: "date",
+    };
+    mockProjectMetadata(1, field);
+
+    const data = { data: { projectV2Item: { id: 1 } } };
+    mockGraphQL(data, "clearField", "clearProjectV2ItemFieldValue");
 
     await updateProject.run();
     expect(mock.done()).toBe(true);
