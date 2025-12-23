@@ -76,6 +76,14 @@ export async function fetchContentMetadata(
     { contentId, fieldName }
   );
 
+  // Handle case where node is null (e.g., when PR is closed without merging)
+  if (!result.node) {
+    setFailed(
+      `Content not found with ID ${contentId} - it may have been deleted or is not accessible`
+    );
+    return {};
+  }
+
   const item = result.node.projectItems.nodes.find(
     (node: GraphQlQueryResponseData) => {
       return (
@@ -222,7 +230,7 @@ export function convertValueToFieldType(
   value: string,
   fieldType: string
 ): string | number {
-  if (fieldType === "NUMBER") {
+  if (fieldType === "number") {
     const numValue = parseFloat(value);
     if (isNaN(numValue)) {
       throw new Error(`Invalid number value: ${value}`);
