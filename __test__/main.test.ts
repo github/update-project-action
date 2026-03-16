@@ -2,6 +2,11 @@ import * as updateProject from "../src/update-project";
 import fetchMock from "fetch-mock";
 import { runInContext } from "vm";
 
+jest.mock("@actions/core", () => ({
+  ...jest.requireActual("@actions/core"),
+  setFailed: jest.fn(),
+}));
+
 test("ensureExists returns false", () => {
   const result = updateProject.ensureExists(undefined, "test", "test");
   expect(result).toBe(false);
