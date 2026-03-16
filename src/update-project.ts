@@ -17,7 +17,7 @@ export async function fetchContentMetadata(
   contentId: string,
   fieldName: string,
   projectNumber: number,
-  owner: string
+  owner: string,
 ): Promise<GraphQlQueryResponseData> {
   const result: GraphQlQueryResponseData = await octokit.graphql(
     `
@@ -73,7 +73,7 @@ export async function fetchContentMetadata(
       }
     }
   `,
-    { contentId, fieldName }
+    { contentId, fieldName },
   );
 
   const item = result.node.projectItems.nodes.find(
@@ -82,7 +82,7 @@ export async function fetchContentMetadata(
         node.project.number === projectNumber &&
         node.project.owner.login === owner
       );
-    }
+    },
   );
   const itemTitle = result.node.title;
 
@@ -104,7 +104,7 @@ export async function fetchProjectMetadata(
   projectNumber: number,
   fieldName: string,
   value: string,
-  operation: string
+  operation: string,
 ): Promise<GraphQlQueryResponseData> {
   const result: GraphQlQueryResponseData = await octokit.graphql(
     `
@@ -131,7 +131,7 @@ export async function fetchProjectMetadata(
       }
     }
     `,
-    { organization: owner, projectNumber }
+    { organization: owner, projectNumber },
   );
 
   // Ensure project was found
@@ -139,14 +139,14 @@ export async function fetchProjectMetadata(
     !ensureExists(
       result.organization.projectV2?.id,
       "project",
-      `Number ${projectNumber}, Owner ${owner}`
+      `Number ${projectNumber}, Owner ${owner}`,
     )
   ) {
     return {};
   }
 
   const field = result.organization.projectV2.fields.nodes.find(
-    (f: GraphQlQueryResponseData) => f.name === fieldName
+    (f: GraphQlQueryResponseData) => f.name === fieldName,
   );
 
   // Ensure field was found
@@ -155,7 +155,7 @@ export async function fetchProjectMetadata(
   }
 
   const option = field.options?.find(
-    (o: GraphQlQueryResponseData) => o.name === value
+    (o: GraphQlQueryResponseData) => o.name === value,
   );
 
   // Ensure option was found, if field is single select
@@ -186,7 +186,7 @@ export async function fetchProjectMetadata(
 export function ensureExists(
   returnedValue: any,
   label: string,
-  identifier: string
+  identifier: string,
 ) {
   if (returnedValue === undefined) {
     setFailed(`${label} not found with ${identifier}`);
@@ -220,7 +220,7 @@ export function valueGraphqlType(fieldType: String): String {
  */
 export function convertValueToFieldType(
   value: string,
-  fieldType: string
+  fieldType: string,
 ): string | number {
   if (fieldType === "NUMBER") {
     const numValue = parseFloat(value);
@@ -241,7 +241,7 @@ export function convertValueToFieldType(
 export async function updateField(
   projectMetadata: GraphQlQueryResponseData,
   contentMetadata: GraphQlQueryResponseData,
-  value: string
+  value: string,
 ): Promise<GraphQlQueryResponseData> {
   let valueType: string;
   let valueToSet: string | number;
@@ -252,7 +252,7 @@ export async function updateField(
   } else {
     valueToSet = convertValueToFieldType(
       value,
-      projectMetadata.field.fieldType
+      projectMetadata.field.fieldType,
     );
     valueType = projectMetadata.field.fieldType;
   }
@@ -260,7 +260,7 @@ export async function updateField(
   const result: GraphQlQueryResponseData = await octokit.graphql(
     `
     mutation($project: ID!, $item: ID!, $field: ID!, $value: ${valueGraphqlType(
-      projectMetadata.field.fieldType
+      projectMetadata.field.fieldType,
     )}) {
       updateProjectV2ItemFieldValue(
         input: {
@@ -283,7 +283,7 @@ export async function updateField(
       item: contentMetadata.id,
       field: projectMetadata.field.fieldId,
       value: valueToSet,
-    }
+    },
   );
 
   return result;
@@ -297,7 +297,7 @@ export async function updateField(
  */
 export async function clearField(
   projectMetadata: GraphQlQueryResponseData,
-  contentMetadata: GraphQlQueryResponseData
+  contentMetadata: GraphQlQueryResponseData,
 ): Promise<GraphQlQueryResponseData> {
   const result: GraphQlQueryResponseData = await octokit.graphql(
     `
@@ -319,7 +319,7 @@ export async function clearField(
       project: projectMetadata.projectId,
       item: contentMetadata.id,
       field: projectMetadata.field.fieldId,
-    }
+    },
   );
 
   return result;
@@ -336,7 +336,7 @@ export function getInputs(): { [key: string]: any } {
 
   if (!["read", "update", "clear"].includes(operation)) {
     setFailed(
-      `Invalid value passed for the 'operation' parameter (passed: ${operation}, allowed: read, update, clear)`
+      `Invalid value passed for the 'operation' parameter (passed: ${operation}, allowed: read, update, clear)`,
     );
 
     return {};
@@ -377,7 +377,7 @@ export async function run(): Promise<void> {
     inputs.contentId,
     inputs.fieldName,
     inputs.projectNumber,
-    inputs.owner
+    inputs.owner,
   );
   if (Object.entries(contentMetadata).length === 0) return;
 
@@ -386,7 +386,7 @@ export async function run(): Promise<void> {
     inputs.projectNumber,
     inputs.fieldName,
     inputs.value,
-    inputs.operation
+    inputs.operation,
   );
   if (Object.entries(projectMetadata).length === 0) return;
 
@@ -395,7 +395,7 @@ export async function run(): Promise<void> {
     await updateField(projectMetadata, contentMetadata, inputs.value);
     setOutput("field_updated_value", inputs.value);
     info(
-      `Updated field ${inputs.fieldName} on ${contentMetadata.title} to ${inputs.value}`
+      `Updated field ${inputs.fieldName} on ${contentMetadata.title} to ${inputs.value}`,
     );
   } else if (inputs.operation === "clear") {
     await clearField(projectMetadata, contentMetadata);
