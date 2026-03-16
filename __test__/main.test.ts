@@ -128,7 +128,7 @@ describe("with Octokit setup", () => {
   const mockGraphQL = (
     data: { [key: string]: any },
     name: string,
-    body?: String
+    body?: String,
   ) => {
     const response = { status: 200, body: data };
     const matcher = (_: string, options: { [key: string]: any }): boolean => {
@@ -145,7 +145,7 @@ describe("with Octokit setup", () => {
         name: name,
         functionMatcher: matcher,
       },
-      response
+      response,
     );
   };
 
@@ -160,7 +160,7 @@ describe("with Octokit setup", () => {
     item: {
       field?: { value?: string };
       project: { number: number; owner: { login: string } };
-    }
+    },
   ) => {
     const data = {
       data: {
@@ -183,7 +183,7 @@ describe("with Octokit setup", () => {
    */
   const mockProjectMetadata = (
     projectId: number,
-    field: { [key: string]: any }
+    field: { [key: string]: any },
   ) => {
     const data = {
       data: {
@@ -221,7 +221,7 @@ describe("with Octokit setup", () => {
       "1",
       "test",
       1,
-      "github"
+      "github",
     );
     expect(result).toEqual({ ...item, ...{ title: "test" } });
     expect(mock.done()).toBe(true);
@@ -235,7 +235,7 @@ describe("with Octokit setup", () => {
       "2",
       "test",
       2,
-      "github"
+      "github",
     );
     expect(result).toEqual({});
     expect(mock.done()).toBe(true);
@@ -269,7 +269,7 @@ describe("with Octokit setup", () => {
       1,
       "testField",
       "testValue",
-      "update"
+      "update",
     );
     expect(result).toEqual(expected);
     expect(mock.done()).toBe(true);
@@ -294,7 +294,7 @@ describe("with Octokit setup", () => {
       1,
       "missingField",
       "testValue",
-      "update"
+      "update",
     );
     expect(missingField).toEqual({});
     expect(mock.done()).toBe(true);
@@ -319,7 +319,7 @@ describe("with Octokit setup", () => {
       1,
       "testField",
       "missingValue",
-      "update"
+      "update",
     );
     expect(missingValue).toEqual({});
     expect(mock.done()).toBe(true);
@@ -341,7 +341,7 @@ describe("with Octokit setup", () => {
       1,
       "testField",
       "missingValue",
-      "update"
+      "update",
     );
     expect(missingValue).toEqual({});
     expect(mock.done()).toBe(true);
@@ -372,18 +372,18 @@ describe("with Octokit setup", () => {
       1,
       "testField",
       "testValue",
-      "update"
+      "update",
     );
     const contentMetadata = await updateProject.fetchContentMetadata(
       "1",
       "test",
       1,
-      "github"
+      "github",
     );
     const result = await updateProject.updateField(
       projectMetadata,
       contentMetadata,
-      "new value"
+      "new value",
     );
     expect(result).toEqual(data.data);
     expect(mock.done()).toBe(true);
@@ -405,7 +405,7 @@ describe("with Octokit setup", () => {
       1,
       "testField",
       "missingValue",
-      "update"
+      "update",
     );
     expect(missingValue).toEqual({});
     expect(mock.done()).toBe(true);
@@ -431,18 +431,18 @@ describe("with Octokit setup", () => {
       1,
       "testField",
       "testValue",
-      "update"
+      "update",
     );
     const contentMetadata = await updateProject.fetchContentMetadata(
       "1",
       "test",
       1,
-      "github"
+      "github",
     );
     const result = await updateProject.updateField(
       projectMetadata,
       contentMetadata,
-      "new value"
+      "new value",
     );
     expect(result).toEqual(data.data);
     expect(mock.done()).toBe(true);
@@ -467,18 +467,18 @@ describe("with Octokit setup", () => {
       1,
       "testField",
       "42",
-      "update"
+      "update",
     );
     const contentMetadata = await updateProject.fetchContentMetadata(
       "1",
       "test",
       1,
-      "github"
+      "github",
     );
     const result = await updateProject.updateField(
       projectMetadata,
       contentMetadata,
-      "42"
+      "42",
     );
     expect(result).toEqual(data.data);
     expect(mock.done()).toBe(true);
@@ -503,18 +503,18 @@ describe("with Octokit setup", () => {
       1,
       "testField",
       "0",
-      "update"
+      "update",
     );
     const contentMetadata = await updateProject.fetchContentMetadata(
       "1",
       "test",
       1,
-      "github"
+      "github",
     );
     const result = await updateProject.updateField(
       projectMetadata,
       contentMetadata,
-      "0"
+      "0",
     );
     expect(result).toEqual(data.data);
     expect(mock.done()).toBe(true);
@@ -539,17 +539,17 @@ describe("with Octokit setup", () => {
       1,
       "testField",
       "",
-      "clear"
+      "clear",
     );
     const contentMetadata = await updateProject.fetchContentMetadata(
       "1",
       "test",
       1,
-      "github"
+      "github",
     );
     const result = await updateProject.clearField(
       projectMetadata,
-      contentMetadata
+      contentMetadata,
     );
     expect(result).toEqual(data.data);
     expect(mock.done()).toBe(true);
